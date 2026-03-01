@@ -1,0 +1,26 @@
+{
+	"name": "@product-model/cli",
+	"version": "0.1.0",
+	"type": "module",
+	"bin": {
+		"pm": "./dist/index.js"
+	},
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsup",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@product-model/core": "workspace:*",
+		"citty": "^0.1.6"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.2",
+		"tsup": "^8.3.6",
+		"typescript": "^5.7.3"
+	},
+	"engines": {
+		"node": ">=22"
+	},
+	"license": "MIT"
+}
