@@ -27,3 +27,5 @@ export type {
 } from "./validation.js";
 
 export type { BuildOutput } from "./output.js";
+
+export type { PMWorkspace, ParseWorkspaceOptions, WorkspaceModule } from "./workspace.js";

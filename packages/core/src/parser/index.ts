@@ -1,6 +1,7 @@
 import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
+import { VFile } from "vfile";
 import type { PMDocument } from "../types/ast.js";
 import { type DocumentMeta, mdxToPmast } from "./mdx-to-pmast.js";
 import { type ExtractedBlock, remarkProductModel } from "./remark-product-model.js";
@@ -30,8 +31,10 @@ export interface ParseOptions {
  */
 export async function parse(source: string, options: ParseOptions): Promise<PMDocument> {
 	const processor = unified().use(remarkParse).use(remarkMdx).use(remarkProductModel);
+	const file = new VFile({ value: source });
+	const tree = processor.parse(file);
 
-	const file = await processor.process(source);
+	await processor.run(tree, file);
 
 	const extractedBlocks = (file.data.extractedBlocks ?? []) as ExtractedBlock[];
 

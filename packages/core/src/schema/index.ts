@@ -22,3 +22,9 @@ export {
 } from "./blocks.js";
 
 export type { SectionBlock } from "./blocks.js";
+
+export {
+	PMWorkspaceSchema,
+	ParseWorkspaceOptionsSchema,
+	WorkspaceModuleSchema,
+} from "./workspace.js";

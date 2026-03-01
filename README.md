@@ -12,11 +12,16 @@ Product Model introduces a structured MDX-based grammar where Product Managers a
 
 ```mdx
 <Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
-  <Definition id="cart-item" name="Cart Item" version="1.0.0"
+  <Definition
+    id="cart-item"
+    name="Cart Item"
+    version="1.0.0"
     fields='[{"name":"productId","type":"string","required":true},
              {"name":"quantity","type":"number","required":true}]'
   />
-  <Policy id="max-qty" name="Max Quantity"
+  <Policy
+    id="max-qty"
+    name="Max Quantity"
     rule="A single cart item cannot exceed 99 units"
     enforcement="must"
   />
@@ -44,17 +49,44 @@ pm validate models/checkout.product.mdx --title "Checkout" --version "1.0.0"
 pm build models/checkout.product.mdx -o checkout.json --title "Checkout" --version "1.0.0"
 ```
 
+### Validate a workspace (recursive multi-file mode)
+
+```bash
+pm validate --workspace-root models --title "Product Workspace" --version "1.0.0"
+```
+
+Workspace mode scans `**/*.product.mdx` recursively under the workspace root, excluding common
+build/vendor directories (`.git`, `node_modules`, `dist`).
+
+### Build workspace JSON output
+
+```bash
+pm build --workspace-root models -o workspace.json --title "Product Workspace" --version "1.0.0"
+```
+
+Workspace build output includes:
+
+- `modules` (per-file parsed documents)
+- `idIndex` (global block ID to source file mapping)
+- `mergedDocument` (single combined document view)
+
+### Workspace reference rules
+
+- `Link.from` and `Link.to` use bare block IDs in workspace mode.
+- Link targets resolve across all scanned `.product.mdx` files.
+- Block IDs must be globally unique across the workspace.
+
 ## Block Reference
 
-| Block | Children | Required Fields |
-|-------|----------|-----------------|
-| **Feature** | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name`, `status` |
-| **Section** | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name` |
-| **Definition** | — | `id`, `name`, `version`, `fields` |
-| **Policy** | — | `id`, `name`, `rule` |
-| **Constraint** | — | `id`, `name`, `condition` |
-| **Link** | — | `from`, `to`, `relationship` |
-| **Metric** | — | `id`, `name` |
+| Block          | Children                                              | Required Fields                   |
+| -------------- | ----------------------------------------------------- | --------------------------------- |
+| **Feature**    | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name`, `status`            |
+| **Section**    | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name`                      |
+| **Definition** | —                                                     | `id`, `name`, `version`, `fields` |
+| **Policy**     | —                                                     | `id`, `name`, `rule`              |
+| **Constraint** | —                                                     | `id`, `name`, `condition`         |
+| **Link**       | —                                                     | `from`, `to`, `relationship`      |
+| **Metric**     | —                                                     | `id`, `name`                      |
 
 ## Field Types
 
@@ -72,10 +104,10 @@ Product Model describes itself using its own grammar. See [`models/product-model
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
+| Package                                | Description                           |
+| -------------------------------------- | ------------------------------------- |
 | [`@product-model/core`](packages/core) | Parser, validator, schemas, and types |
-| [`@product-model/cli`](packages/cli) | CLI for validate and build commands |
+| [`@product-model/cli`](packages/cli)   | CLI for validate and build commands   |
 
 ## Roadmap
 
