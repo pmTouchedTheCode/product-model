@@ -1,0 +1,28 @@
+<Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
+
+  <Section id="cart-section" name="Shopping Cart">
+    <Definition id="cart-item" name="Cart Item" version="1.0.0"
+      fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"price","type":"number","required":true}]'
+    />
+    <Policy id="max-quantity" name="Max Quantity Policy"
+      rule="A single cart item cannot exceed 99 units"
+      enforcement="must"
+    />
+    <Constraint id="positive-price" name="Positive Price"
+      condition="price must be greater than 0"
+    />
+  </Section>
+
+  <Section id="payment-section" name="Payment">
+    <Definition id="payment-method" name="Payment Method" version="1.0.0"
+      fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","paypal","apple_pay"]},{"name":"token","type":"string","required":true}]'
+    />
+    <Metric id="payment-success-rate" name="Payment Success Rate"
+      unit="percentage"
+      target="99.5"
+    />
+  </Section>
+
+  <Link id="cart-payment-link" from="cart-section" to="payment-section" relationship="depends-on" />
+
+</Feature>

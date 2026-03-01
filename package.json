@@ -1,0 +1,24 @@
+{
+	"name": "product-model",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"packageManager": "pnpm@9.15.4",
+	"scripts": {
+		"build": "turbo build",
+		"test": "turbo test",
+		"typecheck": "turbo typecheck",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"changeset": "changeset"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@changesets/cli": "^2.27.12",
+		"turbo": "^2.3.3",
+		"typescript": "^5.7.3"
+	}
+}

@@ -1,0 +1,61 @@
+{/* Product Model — self-describing dogfood file */}
+{/* version: 1.0.0 */}
+{/* title: Product Model */}
+
+<Feature id="product-model-core" name="Product Model Core" status="approved" priority="p0">
+
+  <Section id="grammar-system" name="Grammar System">
+    <Definition id="block-types" name="Block Types" version="1.0.0"
+      fields='[{"name":"type","type":"enum","required":true,"enumValues":["Feature","Section","Definition","Policy","Constraint","Link","Metric"]},{"name":"id","type":"string","required":true},{"name":"name","type":"string","required":true}]'
+    />
+    <Policy id="root-only-feature" name="Root-Only Feature"
+      rule="Only Feature blocks are allowed at the document root level"
+      enforcement="must"
+    />
+    <Policy id="unique-ids" name="Unique Block IDs"
+      rule="All block IDs must be unique within a single document"
+      enforcement="must"
+    />
+    <Constraint id="semver-versions" name="Semantic Versioning"
+      condition="All version fields must follow semantic versioning (x.y.z)"
+    />
+  </Section>
+
+  <Section id="field-system" name="Field System">
+    <Definition id="field-spec" name="Field Specification" version="1.0.0"
+      fields='[{"name":"name","type":"string","required":true},{"name":"type","type":"enum","required":true,"enumValues":["string","number","boolean","datetime","enum"]},{"name":"required","type":"boolean","required":true},{"name":"description","type":"string","required":false}]'
+    />
+    <Constraint id="enum-values-required" name="Enum Values Required"
+      condition="Fields of type enum must define at least one enumValues entry"
+    />
+  </Section>
+
+  <Section id="validation-system" name="Validation System">
+    <Definition id="validation-result" name="Validation Result" version="1.0.0"
+      fields='[{"name":"valid","type":"boolean","required":true},{"name":"diagnostics","type":"string","required":true}]'
+    />
+    <Policy id="all-errors-mode" name="All-Errors Validation"
+      rule="Validation must collect all errors in one pass rather than fail-fast"
+      enforcement="must"
+    />
+  </Section>
+
+  <Link id="grammar-to-validation" from="grammar-system" to="validation-system" relationship="depends-on" />
+  <Link id="fields-to-grammar" from="field-system" to="grammar-system" relationship="extends" />
+
+</Feature>
+
+<Feature id="product-model-cli" name="Product Model CLI" status="approved" priority="p1">
+
+  <Definition id="cli-commands" name="CLI Commands" version="1.0.0"
+    fields='[{"name":"command","type":"enum","required":true,"enumValues":["validate","build"]},{"name":"file","type":"string","required":true},{"name":"output","type":"string","required":false}]'
+  />
+
+  <Policy id="exit-codes" name="CLI Exit Codes"
+    rule="CLI must exit with code 0 on success and code 1 on validation failure"
+    enforcement="must"
+  />
+
+  <Link id="cli-depends-core" from="product-model-cli" to="product-model-core" relationship="depends-on" />
+
+</Feature>

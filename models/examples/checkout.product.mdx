@@ -1,0 +1,71 @@
+{/* E-commerce Checkout — example product model */}
+{/* version: 1.0.0 */}
+{/* title: Checkout Flow */}
+
+<Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
+
+  <Section id="cart" name="Shopping Cart">
+    <Definition id="cart-item" name="Cart Item" version="1.0.0"
+      fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"unitPrice","type":"number","required":true},{"name":"currency","type":"enum","required":true,"enumValues":["USD","EUR","GBP","KRW"]}]'
+    />
+    <Policy id="max-cart-items" name="Maximum Cart Items"
+      rule="A cart may contain at most 50 distinct line items"
+      enforcement="must"
+    />
+    <Policy id="positive-quantity" name="Positive Quantity"
+      rule="Quantity must be at least 1 and at most 99 per line item"
+      enforcement="must"
+    />
+    <Metric id="cart-abandonment" name="Cart Abandonment Rate"
+      unit="percentage"
+      target="30"
+    />
+  </Section>
+
+  <Section id="payment" name="Payment Processing">
+    <Definition id="payment-method" name="Payment Method" version="1.0.0"
+      fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","debit_card","paypal","apple_pay","google_pay"]},{"name":"token","type":"string","required":true},{"name":"last4","type":"string","required":false}]'
+    />
+    <Policy id="pci-compliance" name="PCI Compliance"
+      rule="Raw card numbers must never be stored; only tokenized references are permitted"
+      enforcement="must"
+    />
+    <Constraint id="payment-timeout" name="Payment Timeout"
+      condition="Payment gateway response must arrive within 30 seconds"
+    />
+    <Metric id="payment-success" name="Payment Success Rate"
+      unit="percentage"
+      target="99.5"
+    />
+  </Section>
+
+  <Section id="shipping" name="Shipping">
+    <Definition id="shipping-address" name="Shipping Address" version="1.0.0"
+      fields='[{"name":"street","type":"string","required":true},{"name":"city","type":"string","required":true},{"name":"state","type":"string","required":false},{"name":"postalCode","type":"string","required":true},{"name":"country","type":"string","required":true}]'
+    />
+    <Definition id="shipping-option" name="Shipping Option" version="1.0.0"
+      fields='[{"name":"carrier","type":"string","required":true},{"name":"speed","type":"enum","required":true,"enumValues":["standard","express","overnight"]},{"name":"price","type":"number","required":true},{"name":"estimatedDays","type":"number","required":true}]'
+    />
+  </Section>
+
+  <Section id="order-confirmation" name="Order Confirmation">
+    <Definition id="order" name="Order" version="1.0.0"
+      fields='[{"name":"orderId","type":"string","required":true},{"name":"status","type":"enum","required":true,"enumValues":["pending","confirmed","shipped","delivered","cancelled"]},{"name":"total","type":"number","required":true},{"name":"createdAt","type":"datetime","required":true}]'
+    />
+    <Policy id="confirmation-email" name="Order Confirmation Email"
+      rule="A confirmation email must be sent within 60 seconds of order placement"
+      enforcement="must"
+    />
+  </Section>
+
+  <Link id="cart-to-payment" from="cart" to="payment" relationship="depends-on"
+    description="Cart must be finalized before payment"
+  />
+  <Link id="payment-to-shipping" from="payment" to="shipping" relationship="depends-on"
+    description="Payment must succeed before shipping is arranged"
+  />
+  <Link id="shipping-to-confirmation" from="shipping" to="order-confirmation" relationship="depends-on"
+    description="Shipping selection completes the order"
+  />
+
+</Feature>
