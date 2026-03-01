@@ -8,8 +8,11 @@
 	"packageManager": "pnpm@9.15.4",
 	"scripts": {
 		"build": "turbo build",
+		"build:studio": "pnpm --filter @product-model/studio build",
+		"dev:studio": "pnpm --filter @product-model/studio dev",
 		"test": "turbo test",
 		"typecheck": "turbo typecheck",
+		"typecheck:studio": "pnpm --filter @product-model/studio typecheck",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
