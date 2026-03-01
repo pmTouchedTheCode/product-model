@@ -2,70 +2,104 @@
 {/* version: 1.0.0 */}
 {/* title: Checkout Flow */}
 
-<Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
+<Feature id="checkout" name="Checkout Flow">
+  Comprehensive checkout flow from cart preparation to order confirmation.
 
   <Section id="cart" name="Shopping Cart">
+    Captures line items and shopping constraints.
     <Definition id="cart-item" name="Cart Item" version="1.0.0"
       fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"unitPrice","type":"number","required":true},{"name":"currency","type":"enum","required":true,"enumValues":["USD","EUR","GBP","KRW"]}]'
-    />
+    >
+      Canonical structure for one line item in checkout.
+    </Definition>
     <Policy id="max-cart-items" name="Maximum Cart Items"
       rule="A cart may contain at most 50 distinct line items"
       enforcement="must"
-    />
+    >
+      Prevent oversized carts that degrade fulfillment and payment UX.
+      <Logic id="max-cart-items-logic" name="Max Cart Item Guard">
+        On add-item request, count distinct items; reject when count exceeds 50.
+      </Logic>
+    </Policy>
     <Policy id="positive-quantity" name="Positive Quantity"
       rule="Quantity must be at least 1 and at most 99 per line item"
       enforcement="must"
-    />
-    <Metric id="cart-abandonment" name="Cart Abandonment Rate"
-      unit="percentage"
-      target="30"
-    />
+    >
+      Keep quantity values within safe operational limits.
+      <Logic id="positive-quantity-logic" name="Quantity Bounds Validation">
+        Accept quantity only when it is between 1 and 99 inclusive.
+      </Logic>
+    </Policy>
   </Section>
 
   <Section id="payment" name="Payment Processing">
+    Manages payment method capture and gateway constraints.
     <Definition id="payment-method" name="Payment Method" version="1.0.0"
       fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","debit_card","paypal","apple_pay","google_pay"]},{"name":"token","type":"string","required":true},{"name":"last4","type":"string","required":false}]'
-    />
+    >
+      Normalized payment representation for authorization and capture.
+    </Definition>
     <Policy id="pci-compliance" name="PCI Compliance"
       rule="Raw card numbers must never be stored; only tokenized references are permitted"
       enforcement="must"
-    />
+    >
+      Enforce PCI-safe handling of payment credentials.
+      <Logic id="pci-compliance-logic" name="Tokenization Enforcement">
+        Drop PAN fields and persist only provider-issued tokens.
+      </Logic>
+    </Policy>
     <Constraint id="payment-timeout" name="Payment Timeout"
       condition="Payment gateway response must arrive within 30 seconds"
-    />
-    <Metric id="payment-success" name="Payment Success Rate"
-      unit="percentage"
-      target="99.5"
-    />
+    >
+      Protect user flow from long-running authorization calls.
+    </Constraint>
   </Section>
 
   <Section id="shipping" name="Shipping">
+    Shipping destination and fulfillment option data.
     <Definition id="shipping-address" name="Shipping Address" version="1.0.0"
       fields='[{"name":"street","type":"string","required":true},{"name":"city","type":"string","required":true},{"name":"state","type":"string","required":false},{"name":"postalCode","type":"string","required":true},{"name":"country","type":"string","required":true}]'
-    />
+    >
+      Address schema for delivery and tax calculation.
+    </Definition>
     <Definition id="shipping-option" name="Shipping Option" version="1.0.0"
       fields='[{"name":"carrier","type":"string","required":true},{"name":"speed","type":"enum","required":true,"enumValues":["standard","express","overnight"]},{"name":"price","type":"number","required":true},{"name":"estimatedDays","type":"number","required":true}]'
-    />
+    >
+      Available shipping methods offered at checkout.
+    </Definition>
   </Section>
 
   <Section id="order-confirmation" name="Order Confirmation">
+    Final order record and confirmation policies.
     <Definition id="order" name="Order" version="1.0.0"
       fields='[{"name":"orderId","type":"string","required":true},{"name":"status","type":"enum","required":true,"enumValues":["pending","confirmed","shipped","delivered","cancelled"]},{"name":"total","type":"number","required":true},{"name":"createdAt","type":"datetime","required":true}]'
-    />
+    >
+      Immutable order snapshot created after successful payment.
+    </Definition>
     <Policy id="confirmation-email" name="Order Confirmation Email"
       rule="A confirmation email must be sent within 60 seconds of order placement"
       enforcement="must"
-    />
+    >
+      Ensure users get immediate post-purchase confirmation.
+      <Logic id="confirmation-email-logic" name="Confirmation Delivery Logic">
+        Enqueue confirmation event at order creation and retry until sent or timed out.
+      </Logic>
+    </Policy>
   </Section>
 
   <Link id="cart-to-payment" from="cart" to="payment" relationship="depends-on"
     description="Cart must be finalized before payment"
-  />
+  >
+    Checkout moves from cart validation to payment authorization.
+  </Link>
   <Link id="payment-to-shipping" from="payment" to="shipping" relationship="depends-on"
     description="Payment must succeed before shipping is arranged"
-  />
+  >
+    Successful payment unlocks fulfillment choice and pricing.
+  </Link>
   <Link id="shipping-to-confirmation" from="shipping" to="order-confirmation" relationship="depends-on"
     description="Shipping selection completes the order"
-  />
-
+  >
+    After shipping selection, the order is finalized and confirmed.
+  </Link>
 </Feature>

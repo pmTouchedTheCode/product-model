@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ValidatedFieldSpecSchema } from "./fields.js";
-import { BlockIdSchema, PrioritySchema, SemVerSchema, StatusSchema } from "./primitives.js";
+import { BlockIdSchema, SemVerSchema, StatusSchema } from "./primitives.js";
+
+const BlockContentSchema = z.string().min(1).optional();
 
 // ── Leaf blocks ──────────────────────────────────────────────
 
@@ -10,7 +12,16 @@ export const DefinitionBlockSchema = z.object({
 	name: z.string().min(1),
 	version: SemVerSchema,
 	description: z.string().optional(),
+	content: BlockContentSchema,
 	fields: z.array(ValidatedFieldSpecSchema).min(1, "Definition must have at least one field"),
+});
+
+export const LogicBlockSchema = z.object({
+	type: z.literal("Logic"),
+	id: BlockIdSchema,
+	name: z.string().min(1),
+	description: z.string().optional(),
+	content: BlockContentSchema,
 });
 
 export const PolicyBlockSchema = z.object({
@@ -18,8 +29,10 @@ export const PolicyBlockSchema = z.object({
 	id: BlockIdSchema,
 	name: z.string().min(1),
 	description: z.string().optional(),
+	content: BlockContentSchema,
 	rule: z.string().min(1, "Policy must have a rule"),
 	enforcement: z.enum(["must", "should", "may"]).default("must"),
+	children: z.array(LogicBlockSchema).optional(),
 });
 
 export const ConstraintBlockSchema = z.object({
@@ -27,6 +40,7 @@ export const ConstraintBlockSchema = z.object({
 	id: BlockIdSchema,
 	name: z.string().min(1),
 	description: z.string().optional(),
+	content: BlockContentSchema,
 	condition: z.string().min(1, "Constraint must have a condition"),
 });
 
@@ -37,28 +51,20 @@ export const LinkBlockSchema = z.object({
 	to: BlockIdSchema,
 	relationship: z.enum(["depends-on", "extends", "conflicts-with", "implements"]),
 	description: z.string().optional(),
-});
-
-export const MetricBlockSchema = z.object({
-	type: z.literal("Metric"),
-	id: BlockIdSchema,
-	name: z.string().min(1),
-	description: z.string().optional(),
-	unit: z.string().optional(),
-	target: z.string().optional(),
+	content: BlockContentSchema,
 });
 
 // ── Child block union (non-recursive leaf types) ─────────────
 
-const LeafBlockSchema = z.union([
+const NonContainerBlockSchema = z.union([
 	DefinitionBlockSchema,
 	PolicyBlockSchema,
 	ConstraintBlockSchema,
 	LinkBlockSchema,
-	MetricBlockSchema,
+	LogicBlockSchema,
 ]);
 
-type LeafBlock = z.infer<typeof LeafBlockSchema>;
+type NonContainerBlock = z.infer<typeof NonContainerBlockSchema>;
 
 // ── Recursive containers ─────────────────────────────────────
 
@@ -74,7 +80,8 @@ export interface SectionBlock {
 	name: string;
 	status?: "draft" | "proposed" | "approved" | "deprecated";
 	description?: string;
-	children?: Array<LeafBlock | SectionBlock>;
+	content?: string;
+	children?: Array<NonContainerBlock | SectionBlock>;
 }
 
 const SectionBlockSchemaBase = z.object({
@@ -83,25 +90,35 @@ const SectionBlockSchemaBase = z.object({
 	name: z.string().min(1),
 	status: StatusSchema.optional(),
 	description: z.string().optional(),
+	content: BlockContentSchema,
 });
 
 export const SectionBlockSchema: z.ZodType<SectionBlock> = SectionBlockSchemaBase.extend({
-	children: z.lazy(() => z.array(z.union([LeafBlockSchema, SectionBlockSchema]))).optional(),
+	children: z
+		.lazy(() => z.array(z.union([NonContainerBlockSchema, SectionBlockSchema])))
+		.optional(),
 }) as unknown as z.ZodType<SectionBlock>;
 
-export const FeatureBlockSchema = z.object({
-	type: z.literal("Feature"),
-	id: BlockIdSchema,
-	name: z.string().min(1),
-	status: StatusSchema.default("draft"),
-	priority: PrioritySchema.optional(),
-	description: z.string().optional(),
-	children: z.lazy(() => z.array(z.union([LeafBlockSchema, SectionBlockSchema]))).optional(),
-});
+export const FeatureBlockSchema = z
+	.object({
+		type: z.literal("Feature"),
+		id: BlockIdSchema,
+		name: z.string().min(1),
+		description: z.string().optional(),
+		content: BlockContentSchema,
+		children: z
+			.lazy(() => z.array(z.union([NonContainerBlockSchema, SectionBlockSchema])))
+			.optional(),
+	})
+	.strict();
 
 // ── Union of all blocks ──────────────────────────────────────
 
-export const BlockSchema = z.union([FeatureBlockSchema, SectionBlockSchema, LeafBlockSchema]);
+export const BlockSchema = z.union([
+	FeatureBlockSchema,
+	SectionBlockSchema,
+	NonContainerBlockSchema,
+]);
 
 // ── Document root ────────────────────────────────────────────
 

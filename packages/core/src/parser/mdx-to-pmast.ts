@@ -12,6 +12,10 @@ function transformBlock(extracted: ExtractedBlock): Record<string, unknown> {
 		...extracted.attributes,
 	};
 
+	if (typeof extracted.content === "string" && extracted.content.length > 0) {
+		block.content = extracted.content;
+	}
+
 	// Parse JSON-encoded fields attribute for Definition blocks
 	if (extracted.type === "Definition" && typeof block.fields === "string") {
 		try {

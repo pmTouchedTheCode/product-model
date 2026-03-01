@@ -15,7 +15,6 @@ function makeDoc(overrides: Partial<PMDocument> = {}): PMDocument {
 				type: "Feature",
 				id: "f1",
 				name: "Feature 1",
-				status: "draft",
 			},
 		],
 		...overrides,
@@ -36,7 +35,6 @@ describe("validate", () => {
 					type: "Feature",
 					id: "f1",
 					name: "Feature",
-					status: "draft",
 					children: [
 						{
 							type: "Definition",
@@ -89,7 +87,6 @@ describe("id-uniqueness", () => {
 					type: "Feature",
 					id: "f1",
 					name: "F",
-					status: "draft",
 					children: [
 						{
 							type: "Definition",
@@ -135,7 +132,6 @@ describe("link-integrity", () => {
 					type: "Feature",
 					id: "f1",
 					name: "F",
-					status: "draft",
 					children: [
 						{
 							type: "Link",
@@ -159,7 +155,6 @@ describe("link-integrity", () => {
 					type: "Feature",
 					id: "f1",
 					name: "F",
-					status: "draft",
 					children: [
 						{
 							type: "Definition",

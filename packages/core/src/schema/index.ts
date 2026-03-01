@@ -2,7 +2,6 @@ export {
 	BlockIdSchema,
 	BlockTypeSchema,
 	FieldTypeSchema,
-	PrioritySchema,
 	SemVerSchema,
 	StatusSchema,
 } from "./primitives.js";
@@ -15,7 +14,7 @@ export {
 	DefinitionBlockSchema,
 	FeatureBlockSchema,
 	LinkBlockSchema,
-	MetricBlockSchema,
+	LogicBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
 	SectionBlockSchema,

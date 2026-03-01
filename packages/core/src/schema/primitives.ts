@@ -33,15 +33,10 @@ export const BlockTypeSchema = z.enum([
 	"Policy",
 	"Constraint",
 	"Link",
-	"Metric",
+	"Logic",
 ]);
 
 /**
  * Status values for features and sections.
  */
 export const StatusSchema = z.enum(["draft", "proposed", "approved", "deprecated"]);
-
-/**
- * Priority levels.
- */
-export const PrioritySchema = z.enum(["p0", "p1", "p2", "p3"]);

@@ -1,0 +1,62 @@
+{/* Duolingo Workspace Example — Social and Competition */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-social-engagement" name="Social and Competition Features">
+  Competitive and collaborative loops that increase recurring engagement.
+
+  <Section id="dlg-se-leaderboards" name="Leaderboards and Leagues">
+    Weekly competition system with behavior-based cohorting.
+    <Definition id="dlg-se-league-cycle" name="League Cycle" version="1.0.0"
+      fields='[{"name":"seasonCadence","type":"enum","required":true,"enumValues":["weekly"]},{"name":"resetDayPolicy","type":"string","required":true},{"name":"leagueCount","type":"number","required":true},{"name":"matchingBasis","type":"string","required":true}]'
+    >
+      Defines weekly league cadence and ranking model.
+    </Definition>
+    <Policy id="dlg-se-fair-matching" name="Fair Weekly Matching"
+      rule="Weekly cohorts should be matched using similar study behavior and comparable time-zone windows."
+      enforcement="must"
+    >
+      Matching fairness improves competition credibility and retention.
+      <Logic id="dlg-se-fair-matching-logic" name="Cohort Match Logic">
+        Group users by recency, activity level, and compatible reset windows.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Section id="dlg-se-friends-quests" name="Friends Quests and Friend Streaks">
+    Shared goals and friend commitments layered onto individual study behavior.
+    <Definition id="dlg-se-friends-quest" name="Friends Quest" version="1.0.0"
+      fields='[{"name":"questWindowDays","type":"number","required":true},{"name":"assignmentMode","type":"enum","required":true,"enumValues":["random-friend-pair","universal-matching"]},{"name":"goalType","type":"enum","required":true,"enumValues":["xp","perfect-lessons","mixed"]},{"name":"rewardType","type":"string","required":true}]'
+    >
+      Quest template definition for paired goals.
+    </Definition>
+    <Definition id="dlg-se-friend-streak" name="Friend Streak" version="1.0.0"
+      fields='[{"name":"maxConcurrentFriends","type":"number","required":true},{"name":"dailyActionRequired","type":"boolean","required":true},{"name":"inviteAccepted","type":"boolean","required":true}]'
+    >
+      Tracks mutual daily study commitments between friends.
+    </Definition>
+    <Policy id="dlg-se-quest-timebox" name="Quest Timebox"
+      rule="Friends Quests should remain short, with a five-day completion window to keep urgency and momentum."
+      enforcement="must"
+    >
+      Timeboxed quests increase completion urgency.
+      <Logic id="dlg-se-quest-timebox-logic" name="Quest Deadline Logic">
+        Automatically mark quest failed or complete at the end of day five.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-friend-streak-cap" name="Friend Streak Scalability"
+      rule="Friend Streak should support up to five concurrent friend commitments per learner."
+      enforcement="should"
+    >
+      Cap concurrent streak commitments to prevent overwhelm.
+      <Logic id="dlg-se-friend-streak-cap-logic" name="Friend Streak Capacity Logic">
+        Reject new friend streak creation when active count reaches five.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Link id="dlg-se-to-motivation" from="dlg-social-engagement" to="dlg-motivation-loop" relationship="implements"
+    description="Social mechanics operationalize the motivation strategy through accountability and competition."
+  >
+    Social features operationalize motivation through peer interaction.
+  </Link>
+</Feature>

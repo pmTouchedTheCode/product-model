@@ -1,0 +1,63 @@
+{/* Duolingo Workspace Example — Core Learning */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-core-learning" name="Core Learning Experience">
+  Core curriculum loop that drives lesson completion and progression.
+
+  <Section id="dlg-cl-path-architecture" name="Path Architecture">
+    Unit-based progression sequencing for language and adjacent subjects.
+    <Definition id="dlg-cl-learning-unit" name="Learning Unit" version="1.0.0"
+      fields='[{"name":"unitId","type":"string","required":true},{"name":"subject","type":"enum","required":true,"enumValues":["language","math","music","chess"]},{"name":"cefrBand","type":"string","required":false},{"name":"exerciseMix","type":"string","required":true}]'
+    >
+      Describes one path unit with its instructional composition.
+    </Definition>
+    <Definition id="dlg-cl-session-loop" name="Session Loop" version="1.0.0"
+      fields='[{"name":"sessionId","type":"string","required":true},{"name":"entryPoint","type":"enum","required":true,"enumValues":["path","quest","review","notification"]},{"name":"expectedMinutes","type":"number","required":true},{"name":"xpAwarded","type":"number","required":true}]'
+    >
+      Captures one learning session from entry to completion.
+    </Definition>
+    <Policy id="dlg-cl-sequenced-progression" name="Sequenced Progression"
+      rule="Default learning should guide users through a step-by-step path that mixes concept introduction and reinforcement."
+      enforcement="must"
+    >
+      Maintains predictable and pedagogically sound progression.
+      <Logic id="dlg-cl-sequenced-logic" name="Path Unlock Logic">
+        Unlock the next lesson after mastery threshold is reached on current step.
+      </Logic>
+    </Policy>
+    <Constraint id="dlg-cl-bite-sized-lessons" name="Bite-Sized Lessons"
+      condition="A standard lesson should remain short enough for frequent daily completion and habit formation."
+    >
+      Session duration should support quick daily completion.
+    </Constraint>
+  </Section>
+
+  <Section id="dlg-cl-review-loop" name="Review Loop">
+    Reinforcement systems for retention and recall.
+    <Policy id="dlg-cl-review-availability" name="Review Availability"
+      rule="Completed content should remain reviewable through on-path review, dedicated review areas, and challenge modes."
+      enforcement="must"
+    >
+      Learners need continuous access to prior content for retention.
+      <Logic id="dlg-cl-review-logic" name="Review Eligibility Logic">
+        Expose review modules for all completed units and prioritize weak skills.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Link id="dlg-cl-to-motivation" from="dlg-core-learning" to="dlg-motivation-loop" relationship="depends-on"
+    description="Core progression depends on motivation mechanics to preserve daily study behavior."
+  >
+    Motivation systems sustain daily engagement required by the core curriculum.
+  </Link>
+  <Link id="dlg-cl-to-ai" from="dlg-core-learning" to="dlg-ai-practice" relationship="extends"
+    description="AI practice extends core lessons with realistic conversation experiences."
+  >
+    AI conversation layers on top of foundational lesson progression.
+  </Link>
+  <Link id="dlg-cl-to-subjects" from="dlg-core-learning" to="dlg-subject-expansion" relationship="extends"
+    description="Core learning architecture supports language and non-language subjects."
+  >
+    Same architecture supports multi-subject expansion.
+  </Link>
+</Feature>

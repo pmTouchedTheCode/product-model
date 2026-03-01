@@ -1,0 +1,58 @@
+{/* Duolingo Workspace Example — Motivation Loop */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-motivation-loop" name="Motivation and Habit Loop">
+  Habit mechanics that increase daily return and completion consistency.
+
+  <Section id="dlg-ml-streak-system" name="Streak System">
+    Streak state and preservation mechanics for sustained study habits.
+    <Definition id="dlg-ml-streak-profile" name="Streak Profile" version="1.0.0"
+      fields='[{"name":"currentStreakDays","type":"number","required":true},{"name":"bestStreakDays","type":"number","required":true},{"name":"freezesEquipped","type":"number","required":true},{"name":"timezone","type":"string","required":true}]'
+    >
+      Tracks learner streak health and freeze usage.
+    </Definition>
+    <Policy id="dlg-ml-streak-freeze-policy" name="Streak Freeze Safety"
+      rule="Users should be able to equip up to two Streak Freezes to preserve consistency through occasional missed days."
+      enforcement="must"
+    >
+      Prevents streak-loss churn due to occasional missed sessions.
+      <Logic id="dlg-ml-streak-freeze-logic" name="Streak Freeze Consumption Logic">
+        On missed day, consume one equipped freeze before resetting streak count.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Section id="dlg-ml-energy-system" name="Energy System">
+    Session gating and recovery options for free and paid learners.
+    <Definition id="dlg-ml-energy-state" name="Energy State" version="1.0.0"
+      fields='[{"name":"energyAvailable","type":"number","required":true},{"name":"regenMode","type":"enum","required":true,"enumValues":["time-based","reward-based","hybrid"]},{"name":"isUnlimited","type":"boolean","required":true},{"name":"refillCurrency","type":"enum","required":true,"enumValues":["gems","ads","subscription"]}]'
+    >
+      Represents available learning energy and refill policies.
+    </Definition>
+    <Policy id="dlg-ml-energy-balance" name="Balanced Learning Friction"
+      rule="Session gating should reward correct momentum and reduce early-session failure for new learners."
+      enforcement="must"
+    >
+      Balances challenge with progress continuity.
+      <Logic id="dlg-ml-energy-balance-logic" name="Adaptive Energy Logic">
+        Reduce penalty intensity for beginners and accelerate recovery after correct streaks.
+      </Logic>
+    </Policy>
+    <Constraint id="dlg-ml-energy-recovery" name="Energy Recovery"
+      condition="Free learners must have recovery paths via time, rewarded actions, or gem-based refill."
+    >
+      Free users should always have non-subscriber recovery options.
+    </Constraint>
+  </Section>
+
+  <Link id="dlg-ml-to-social" from="dlg-motivation-loop" to="dlg-social-engagement" relationship="depends-on"
+    description="Social accountability increases consistency of daily behavior."
+  >
+    Social accountability amplifies the motivation loop.
+  </Link>
+  <Link id="dlg-ml-to-monetization" from="dlg-motivation-loop" to="dlg-subscription-monetization" relationship="depends-on"
+    description="Premium plans monetize convenience features such as ad removal and unlimited energy."
+  >
+    Motivation mechanics create context for subscription value.
+  </Link>
+</Feature>

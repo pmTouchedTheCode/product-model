@@ -11,7 +11,7 @@ describe("GRAMMAR_TABLE", () => {
 		expect(types).toContain("Policy");
 		expect(types).toContain("Constraint");
 		expect(types).toContain("Link");
-		expect(types).toContain("Metric");
+		expect(types).toContain("Logic");
 	});
 
 	it("Feature can hold all non-Feature block types", () => {
@@ -20,20 +20,23 @@ describe("GRAMMAR_TABLE", () => {
 		expect(GRAMMAR_TABLE.Feature).toContain("Policy");
 		expect(GRAMMAR_TABLE.Feature).toContain("Constraint");
 		expect(GRAMMAR_TABLE.Feature).toContain("Link");
-		expect(GRAMMAR_TABLE.Feature).toContain("Metric");
+		expect(GRAMMAR_TABLE.Feature).toContain("Logic");
 		expect(GRAMMAR_TABLE.Feature).not.toContain("Feature");
 	});
 
-	it("Section has the same children as Feature", () => {
-		expect(GRAMMAR_TABLE.Section).toEqual(GRAMMAR_TABLE.Feature);
+	it("Section excludes Logic children", () => {
+		expect(GRAMMAR_TABLE.Section).not.toContain("Logic");
+	});
+
+	it("Policy allows only Logic children", () => {
+		expect(GRAMMAR_TABLE.Policy).toEqual(["Logic"]);
 	});
 
 	it("leaf blocks have no children", () => {
 		expect(GRAMMAR_TABLE.Definition).toEqual([]);
-		expect(GRAMMAR_TABLE.Policy).toEqual([]);
 		expect(GRAMMAR_TABLE.Constraint).toEqual([]);
 		expect(GRAMMAR_TABLE.Link).toEqual([]);
-		expect(GRAMMAR_TABLE.Metric).toEqual([]);
+		expect(GRAMMAR_TABLE.Logic).toEqual([]);
 	});
 });
 

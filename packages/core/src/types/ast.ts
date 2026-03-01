@@ -5,7 +5,7 @@ import type {
 	DefinitionBlockSchema,
 	FeatureBlockSchema,
 	LinkBlockSchema,
-	MetricBlockSchema,
+	LogicBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
 } from "../schema/blocks.js";
@@ -14,7 +14,6 @@ import type {
 	BlockIdSchema,
 	BlockTypeSchema,
 	FieldTypeSchema,
-	PrioritySchema,
 	SemVerSchema,
 	StatusSchema,
 } from "../schema/primitives.js";
@@ -26,7 +25,6 @@ export type SemVer = z.infer<typeof SemVerSchema>;
 export type FieldType = z.infer<typeof FieldTypeSchema>;
 export type BlockType = z.infer<typeof BlockTypeSchema>;
 export type Status = z.infer<typeof StatusSchema>;
-export type Priority = z.infer<typeof PrioritySchema>;
 
 // ── Field types ──────────────────────────────────────────────
 
@@ -38,7 +36,7 @@ export type DefinitionBlock = z.infer<typeof DefinitionBlockSchema>;
 export type PolicyBlock = z.infer<typeof PolicyBlockSchema>;
 export type ConstraintBlock = z.infer<typeof ConstraintBlockSchema>;
 export type LinkBlock = z.infer<typeof LinkBlockSchema>;
-export type MetricBlock = z.infer<typeof MetricBlockSchema>;
+export type LogicBlock = z.infer<typeof LogicBlockSchema>;
 export type { SectionBlock } from "../schema/blocks.js";
 export type FeatureBlock = z.infer<typeof FeatureBlockSchema>;
 

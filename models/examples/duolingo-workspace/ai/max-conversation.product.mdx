@@ -1,0 +1,49 @@
+{/* Duolingo Workspace Example — AI Conversation */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-ai-practice" name="AI-Powered Conversation Practice">
+  AI-assisted speaking practice experiences primarily offered in premium tiers.
+
+  <Section id="dlg-ai-video-call" name="Video Call with Lily">
+    Real-time conversational simulation with AI guidance and review.
+    <Definition id="dlg-ai-video-call-session" name="Video Call Session" version="1.0.0"
+      fields='[{"name":"character","type":"enum","required":true,"enumValues":["lily"]},{"name":"hasOnboarding","type":"boolean","required":true},{"name":"realTimeFeedback","type":"boolean","required":true},{"name":"postCallReview","type":"boolean","required":true},{"name":"supportedCourseCount","type":"number","required":true}]'
+    >
+      Session model for guided AI conversation practice.
+    </Definition>
+    <Policy id="dlg-ai-video-call-personalization" name="Dynamic Conversation Personalization"
+      rule="Video call should adapt to learner level and provide transcript/review feedback for confidence building."
+      enforcement="must"
+    >
+      Adaptive tutoring improves learner confidence and progression.
+      <Logic id="dlg-ai-video-call-personalization-logic" name="Adaptive Prompt Logic">
+        Select prompt complexity from learner level and recent error patterns.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Section id="dlg-ai-roleplay" name="Roleplay and Explanations">
+    Scenario-based AI interaction and explanation workflows.
+    <Definition id="dlg-ai-roleplay-module" name="Roleplay Module" version="1.0.0"
+      fields='[{"name":"scenarioSource","type":"enum","required":true,"enumValues":["curriculum-authored","ai-expanded"]},{"name":"givesXp","type":"boolean","required":true},{"name":"feedbackGranularity","type":"enum","required":true,"enumValues":["accuracy-only","accuracy-and-complexity"]}]'
+    >
+      Defines AI roleplay scenario generation and scoring behavior.
+    </Definition>
+    <Constraint id="dlg-ai-human-review" name="Human-in-the-Loop Safety"
+      condition="AI-generated learning prompts and responses should be regularly reviewed by curriculum experts for quality and tone."
+    >
+      Curriculum experts should continuously evaluate AI quality and tone.
+    </Constraint>
+  </Section>
+
+  <Link id="dlg-ai-to-subscription" from="dlg-ai-practice" to="dlg-subscription-monetization" relationship="depends-on"
+    description="Most AI conversation capabilities are packaged through Max tier entitlements."
+  >
+    AI feature access is strongly tied to premium entitlements.
+  </Link>
+  <Link id="dlg-ai-to-core" from="dlg-ai-practice" to="dlg-core-learning" relationship="extends"
+    description="AI conversation deepens practice beyond standard path lessons."
+  >
+    AI practice extends foundational lessons into simulated conversation.
+  </Link>
+</Feature>

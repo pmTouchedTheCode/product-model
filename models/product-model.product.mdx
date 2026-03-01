@@ -2,60 +2,101 @@
 {/* version: 1.0.0 */}
 {/* title: Product Model */}
 
-<Feature id="product-model-core" name="Product Model Core" status="approved" priority="p0">
+<Feature id="product-model-core" name="Product Model Core">
+  Defines the grammar, parsing, and validation behavior for Product Model documents.
 
   <Section id="grammar-system" name="Grammar System">
+    Canonical block grammar and parent-child relationship constraints.
     <Definition id="block-types" name="Block Types" version="1.0.0"
-      fields='[{"name":"type","type":"enum","required":true,"enumValues":["Feature","Section","Definition","Policy","Constraint","Link","Metric"]},{"name":"id","type":"string","required":true},{"name":"name","type":"string","required":true}]'
-    />
+      fields='[{"name":"type","type":"enum","required":true,"enumValues":["Feature","Section","Definition","Policy","Constraint","Link","Logic"]},{"name":"id","type":"string","required":true},{"name":"name","type":"string","required":true}]'
+    >
+      Enumerates supported block tags and identity fields.
+    </Definition>
     <Policy id="root-only-feature" name="Root-Only Feature"
       rule="Only Feature blocks are allowed at the document root level"
       enforcement="must"
-    />
+    >
+      Root-level structure must remain predictable for tooling.
+      <Logic id="root-check-logic" name="Root Type Validation">
+        Traverse root nodes and fail if any root node type is not Feature.
+      </Logic>
+    </Policy>
     <Policy id="unique-ids" name="Unique Block IDs"
       rule="All block IDs must be unique within a single document"
       enforcement="must"
-    />
+    >
+      Duplicate IDs create ambiguous references and broken links.
+      <Logic id="id-uniqueness-logic" name="ID Uniqueness Validation">
+        Collect all IDs and emit an error when the same ID appears more than once.
+      </Logic>
+    </Policy>
     <Constraint id="semver-versions" name="Semantic Versioning"
       condition="All version fields must follow semantic versioning (x.y.z)"
-    />
+    >
+      Version contracts must stay machine-parseable.
+    </Constraint>
   </Section>
 
   <Section id="field-system" name="Field System">
+    Field typing and schema safety for Definition blocks.
     <Definition id="field-spec" name="Field Specification" version="1.0.0"
       fields='[{"name":"name","type":"string","required":true},{"name":"type","type":"enum","required":true,"enumValues":["string","number","boolean","datetime","enum"]},{"name":"required","type":"boolean","required":true},{"name":"description","type":"string","required":false}]'
-    />
+    >
+      Describes typed field declarations consumed by downstream tools.
+    </Definition>
     <Constraint id="enum-values-required" name="Enum Values Required"
       condition="Fields of type enum must define at least one enumValues entry"
-    />
+    >
+      Enum fields must declare an allowed value set.
+    </Constraint>
   </Section>
 
   <Section id="validation-system" name="Validation System">
+    Validation diagnostics and rule execution behavior.
     <Definition id="validation-result" name="Validation Result" version="1.0.0"
       fields='[{"name":"valid","type":"boolean","required":true},{"name":"diagnostics","type":"string","required":true}]'
-    />
+    >
+      Represents full validation output for a parsed document.
+    </Definition>
     <Policy id="all-errors-mode" name="All-Errors Validation"
       rule="Validation must collect all errors in one pass rather than fail-fast"
       enforcement="must"
-    />
+    >
+      Users should receive a full issue list in a single run.
+      <Logic id="all-errors-logic" name="Aggregate Diagnostics">
+        Execute every validation rule and append diagnostics without early termination.
+      </Logic>
+    </Policy>
   </Section>
 
-  <Link id="grammar-to-validation" from="grammar-system" to="validation-system" relationship="depends-on" />
-  <Link id="fields-to-grammar" from="field-system" to="grammar-system" relationship="extends" />
-
+  <Link id="grammar-to-validation" from="grammar-system" to="validation-system" relationship="depends-on">
+    Grammar contracts are enforced by validation rules.
+  </Link>
+  <Link id="fields-to-grammar" from="field-system" to="grammar-system" relationship="extends">
+    Field typing is an extension of core grammar definitions.
+  </Link>
 </Feature>
 
-<Feature id="product-model-cli" name="Product Model CLI" status="approved" priority="p1">
+<Feature id="product-model-cli" name="Product Model CLI">
+  Command-line interface for validating and building Product Model documents.
 
   <Definition id="cli-commands" name="CLI Commands" version="1.0.0"
-    fields='[{"name":"command","type":"enum","required":true,"enumValues":["validate","build"]},{"name":"file","type":"string","required":true},{"name":"output","type":"string","required":false}]'
-  />
+    fields='[{"name":"command","type":"enum","required":true,"enumValues":["validate","build"]},{"name":"file","type":"string","required":false},{"name":"workspaceRoot","type":"string","required":false},{"name":"output","type":"string","required":false}]'
+  >
+    Describes CLI command inputs for single-file and workspace modes.
+  </Definition>
 
   <Policy id="exit-codes" name="CLI Exit Codes"
     rule="CLI must exit with code 0 on success and code 1 on validation failure"
     enforcement="must"
-  />
+  >
+    Exit codes should be deterministic for CI automation.
+    <Logic id="exit-codes-logic" name="Process Exit Behavior">
+      Return 0 on successful parse+validate; return 1 on parse/validation failure.
+    </Logic>
+  </Policy>
 
-  <Link id="cli-depends-core" from="product-model-cli" to="product-model-core" relationship="depends-on" />
-
+  <Link id="cli-depends-core" from="product-model-cli" to="product-model-core" relationship="depends-on">
+    CLI behavior depends on parser and validator capabilities from core package.
+  </Link>
 </Feature>

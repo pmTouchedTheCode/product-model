@@ -1,28 +1,39 @@
-<Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
+<Feature id="checkout" name="Checkout Flow">
+  End-to-end purchase flow from cart through payment confirmation.
 
   <Section id="cart-section" name="Shopping Cart">
+    Manages cart state before a user begins payment.
     <Definition id="cart-item" name="Cart Item" version="1.0.0"
       fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"price","type":"number","required":true}]'
-    />
+    >
+      Canonical line-item contract for checkout calculations.
+    </Definition>
     <Policy id="max-quantity" name="Max Quantity Policy"
       rule="A single cart item cannot exceed 99 units"
       enforcement="must"
-    />
+    >
+      Prevent oversized orders that violate fulfillment constraints.
+      <Logic id="max-qty-guard" name="Quantity Guard">
+        If requested quantity > 99, reject update and return validation error.
+      </Logic>
+    </Policy>
     <Constraint id="positive-price" name="Positive Price"
       condition="price must be greater than 0"
-    />
+    >
+      Every cart item price must remain positive.
+    </Constraint>
   </Section>
 
   <Section id="payment-section" name="Payment">
+    Payment capture and tokenized authorization workflows.
     <Definition id="payment-method" name="Payment Method" version="1.0.0"
       fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","paypal","apple_pay"]},{"name":"token","type":"string","required":true}]'
-    />
-    <Metric id="payment-success-rate" name="Payment Success Rate"
-      unit="percentage"
-      target="99.5"
-    />
+    >
+      Supported payment instruments and token payload.
+    </Definition>
   </Section>
 
-  <Link id="cart-payment-link" from="cart-section" to="payment-section" relationship="depends-on" />
-
+  <Link id="cart-payment-link" from="cart-section" to="payment-section" relationship="depends-on">
+    Cart must be finalized before payment can proceed.
+  </Link>
 </Feature>

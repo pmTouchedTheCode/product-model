@@ -3,18 +3,19 @@ import type { GrammarTable } from "./types/grammar.js";
 /**
  * Canonical grammar table defining allowed parent → children relationships.
  *
- * - Feature: top-level container. Can hold Section, Definition, Policy, Constraint, Link, Metric.
- * - Section: grouping container (recursive). Same children as Feature.
- * - Definition, Policy, Constraint, Link, Metric: leaf blocks with no children.
+ * - Feature: top-level container. Can hold Section, Definition, Policy, Constraint, Link, Logic.
+ * - Section: grouping container (recursive). Same children as Feature minus Logic.
+ * - Policy: can contain nested Logic blocks for detailed execution rules.
+ * - Definition, Constraint, Link, Logic: leaf blocks with no children.
  */
 export const GRAMMAR_TABLE: GrammarTable = {
-	Feature: ["Section", "Definition", "Policy", "Constraint", "Link", "Metric"],
-	Section: ["Section", "Definition", "Policy", "Constraint", "Link", "Metric"],
+	Feature: ["Section", "Definition", "Policy", "Constraint", "Link", "Logic"],
+	Section: ["Section", "Definition", "Policy", "Constraint", "Link"],
 	Definition: [],
-	Policy: [],
+	Policy: ["Logic"],
 	Constraint: [],
 	Link: [],
-	Metric: [],
+	Logic: [],
 } as const;
 
 /**

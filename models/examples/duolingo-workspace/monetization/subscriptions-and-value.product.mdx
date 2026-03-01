@@ -1,0 +1,58 @@
+{/* Duolingo Workspace Example — Monetization */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-subscription-monetization" name="Subscription and Value Model">
+  Monetization layers spanning free, Super, and Max value propositions.
+
+  <Section id="dlg-sm-tier-design" name="Tier Design">
+    Plan packaging and entitlement structure.
+    <Definition id="dlg-sm-subscription-tier" name="Subscription Tier" version="1.0.0"
+      fields='[{"name":"tierName","type":"enum","required":true,"enumValues":["free","super","max"]},{"name":"adsEnabled","type":"boolean","required":true},{"name":"unlimitedEnergy","type":"boolean","required":true},{"name":"practiceHubAccess","type":"boolean","required":true},{"name":"aiConversationAccess","type":"boolean","required":true}]'
+    >
+      Entitlement matrix for core subscription tiers.
+    </Definition>
+    <Policy id="dlg-sm-super-value" name="Super Value Proposition"
+      rule="Super should remove ads, remove learning-energy caps, and unlock dedicated review experiences."
+      enforcement="must"
+    >
+      Defines baseline paid-tier convenience and retention value.
+      <Logic id="dlg-sm-super-value-logic" name="Super Entitlement Logic">
+        Apply ad removal and unlimited energy entitlements immediately after subscription activation.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-max-value" name="Max Value Proposition"
+      rule="Max should include all Super benefits and add premium AI conversation experiences."
+      enforcement="must"
+    >
+      Positions Max as an advanced practice tier.
+      <Logic id="dlg-sm-max-value-logic" name="Max Entitlement Logic">
+        Inherit all Super entitlements and unlock AI conversation modules.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Section id="dlg-sm-family-plan" name="Family Plan">
+    Shared subscription packaging for multi-user access.
+    <Definition id="dlg-sm-family-plan-structure" name="Family Plan Structure" version="1.0.0"
+      fields='[{"name":"maxMembers","type":"number","required":true},{"name":"managerControlsBilling","type":"boolean","required":true},{"name":"householdRestriction","type":"boolean","required":true}]'
+    >
+      Multi-seat subscription model with centralized billing.
+    </Definition>
+    <Constraint id="dlg-sm-inclusion-constraint" name="Inclusive Group Access"
+      condition="Family plan invites should support non-household groups while preserving account-level personalization."
+    >
+      Supports broader group learning without collapsing personalization.
+    </Constraint>
+  </Section>
+
+  <Link id="dlg-sm-to-ai" from="dlg-subscription-monetization" to="dlg-ai-practice" relationship="depends-on"
+    description="Max retention depends on high-quality AI conversation features."
+  >
+    AI quality is a core dependency for Max retention.
+  </Link>
+  <Link id="dlg-sm-to-core" from="dlg-subscription-monetization" to="dlg-core-learning" relationship="depends-on"
+    description="Subscription value is anchored to strong core lesson outcomes."
+  >
+    Paid value must remain grounded in core learning efficacy.
+  </Link>
+</Feature>

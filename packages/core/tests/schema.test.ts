@@ -6,7 +6,7 @@ import {
 	FeatureBlockSchema,
 	FieldTypeSchema,
 	LinkBlockSchema,
-	MetricBlockSchema,
+	LogicBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
 	SemVerSchema,
@@ -90,6 +90,14 @@ describe("block schemas", () => {
 				id: "max-qty",
 				name: "Max Quantity",
 				rule: "Cannot exceed 99",
+				children: [
+					{
+						type: "Logic",
+						id: "max-qty-logic",
+						name: "Quantity Guard",
+						content: "Reject updates when requested quantity exceeds 99.",
+					},
+				],
 			});
 			expect(policy.enforcement).toBe("must");
 		});
@@ -119,16 +127,15 @@ describe("block schemas", () => {
 		});
 	});
 
-	describe("MetricBlockSchema", () => {
-		it("accepts a valid metric", () => {
-			const m = MetricBlockSchema.parse({
-				type: "Metric",
-				id: "latency",
-				name: "API Latency",
-				unit: "ms",
-				target: "200",
+	describe("LogicBlockSchema", () => {
+		it("accepts a valid logic block", () => {
+			const logic = LogicBlockSchema.parse({
+				type: "Logic",
+				id: "checkout-validation",
+				name: "Checkout Validation Logic",
+				content: "Validate cart totals before submission.",
 			});
-			expect(m.unit).toBe("ms");
+			expect(logic.type).toBe("Logic");
 		});
 	});
 
@@ -138,7 +145,6 @@ describe("block schemas", () => {
 				type: "Feature",
 				id: "checkout",
 				name: "Checkout",
-				status: "draft",
 				children: [
 					{
 						type: "Definition",
@@ -150,6 +156,18 @@ describe("block schemas", () => {
 				],
 			});
 			expect(feature.children).toHaveLength(1);
+		});
+
+		it("rejects unsupported status/priority fields", () => {
+			expect(() =>
+				FeatureBlockSchema.parse({
+					type: "Feature",
+					id: "checkout",
+					name: "Checkout",
+					status: "approved",
+					priority: "p0",
+				}),
+			).toThrow();
 		});
 	});
 });
@@ -164,7 +182,6 @@ describe("PMDocumentSchema", () => {
 					type: "Feature",
 					id: "f1",
 					name: "Feature 1",
-					status: "draft",
 				},
 			],
 		});

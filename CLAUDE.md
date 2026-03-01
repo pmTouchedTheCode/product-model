@@ -59,7 +59,7 @@ Schema hierarchy: `primitives.ts` → `fields.ts` → `blocks.ts`. Recursive typ
 
 ### Grammar table
 
-`GRAMMAR_TABLE` in `grammar.ts` is a `Record<BlockType, readonly BlockType[]>` defining allowed parent→child relationships. Only `Feature` is allowed at document root (`ROOT_BLOCK_TYPES`). Leaf blocks (Definition, Policy, Constraint, Link, Metric) have empty children arrays.
+`GRAMMAR_TABLE` in `grammar.ts` is a `Record<BlockType, readonly BlockType[]>` defining allowed parent→child relationships. Only `Feature` is allowed at document root (`ROOT_BLOCK_TYPES`). `Policy` may contain nested `Logic` blocks, while leaf blocks (Definition, Constraint, Link, Logic) have no children arrays.
 
 ### Validation rules
 
@@ -73,7 +73,7 @@ Each rule is `(document: PMDocument) => ValidationDiagnostic[]`. Add new rules t
 
 ## Block types
 
-Feature, Section, Definition, Policy, Constraint, Link, Metric
+Feature, Section, Definition, Policy, Constraint, Link, Logic
 
 ## Code style
 

@@ -10,6 +10,7 @@ export interface ExtractedBlock {
 	type: string;
 	attributes: Record<string, unknown>;
 	children: ExtractedBlock[];
+	content?: string;
 	position?: { line: number; column: number };
 }
 
@@ -42,6 +43,30 @@ function extractAttributeValue(attr: unknown): unknown {
 	return undefined;
 }
 
+function extractTextContent(node: unknown): string {
+	if (typeof node !== "object" || node === null) return "";
+
+	const typedNode = node as { type?: string; value?: unknown; children?: unknown[] };
+	if (typedNode.type === "text" && typeof typedNode.value === "string") {
+		return typedNode.value;
+	}
+
+	if (typeof typedNode.value === "string" && !Array.isArray(typedNode.children)) {
+		return typedNode.value;
+	}
+
+	if (Array.isArray(typedNode.children)) {
+		return typedNode.children.map(extractTextContent).join(" ");
+	}
+
+	return "";
+}
+
+function normalizeContent(raw: string): string | undefined {
+	const normalized = raw.replace(/\s+/g, " ").trim();
+	return normalized.length > 0 ? normalized : undefined;
+}
+
 /**
  * Extract block data from an MDX JSX element and its children.
  */
@@ -60,19 +85,24 @@ function extractBlock(node: MdxJsxFlowElement): ExtractedBlock | null {
 	}
 
 	const children: ExtractedBlock[] = [];
+	const contentFragments: string[] = [];
 	for (const child of node.children) {
 		if (isMdxJsxFlowElement(child)) {
 			const extracted = extractBlock(child);
 			if (extracted) {
 				children.push(extracted);
 			}
+			continue;
 		}
+
+		contentFragments.push(extractTextContent(child));
 	}
 
 	return {
 		type: tagName,
 		attributes,
 		children,
+		content: normalizeContent(contentFragments.join(" ")),
 		position: node.position
 			? { line: node.position.start.line, column: node.position.start.column }
 			: undefined,

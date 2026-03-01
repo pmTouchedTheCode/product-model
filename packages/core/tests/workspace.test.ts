@@ -22,7 +22,7 @@ async function createWorkspace(files: Record<string, string>): Promise<string> {
 }
 
 function featureBlock(featureId: string, children = ""): string {
-	return `<Feature id="${featureId}" name="${featureId}" status="draft">
+	return `<Feature id="${featureId}" name="${featureId}">
 ${children}
 </Feature>`;
 }
@@ -137,7 +137,6 @@ describe("single-file validation compatibility", () => {
 					type: "Feature",
 					id: "checkout",
 					name: "Checkout",
-					status: "draft",
 					children: [
 						{
 							type: "Link",

@@ -1,0 +1,53 @@
+{/* Duolingo Workspace Example — Subject Expansion */}
+{/* research snapshot: 2026-03-01 */}
+
+<Feature id="dlg-subject-expansion" name="Subject and Course Expansion">
+  Platform expansion beyond languages into adjacent learning categories.
+
+  <Section id="dlg-sx-subject-catalog" name="Expanded Subject Catalog">
+    Subject-level catalog and persona coverage.
+    <Definition id="dlg-sx-subject-matrix" name="Subject Matrix" version="1.0.0"
+      fields='[{"name":"subject","type":"enum","required":true,"enumValues":["language","math","music","chess"]},{"name":"courseCount","type":"number","required":true},{"name":"deviceCoverage","type":"enum","required":true,"enumValues":["ios","android","web","multi-platform"]},{"name":"primaryPersona","type":"string","required":true}]'
+    >
+      Subject inventory with device reach and audience focus.
+    </Definition>
+    <Policy id="dlg-sx-cross-subject-progression" name="Cross-Subject Progression"
+      rule="Learners should be able to continue daily habit loops while switching between language and non-language subjects."
+      enforcement="should"
+    >
+      Habit continuity should survive subject switching.
+      <Logic id="dlg-sx-cross-subject-progression-logic" name="Cross-Subject Habit Logic">
+        Preserve streak and daily-goal credit across all eligible subjects.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Section id="dlg-sx-2025-expansion" name="2025 Expansion Snapshot">
+    Snapshot of major product-expansion signals from 2025 updates.
+    <Definition id="dlg-sx-expansion-batch" name="Expansion Batch" version="1.0.0"
+      fields='[{"name":"newLanguageCourses2025","type":"number","required":true},{"name":"newMathUnits","type":"number","required":true},{"name":"duoRadioEpisodesAdded","type":"number","required":true},{"name":"introducedFlashcards","type":"boolean","required":true}]'
+    >
+      Structured record of notable expansion increments.
+    </Definition>
+    <Policy id="dlg-sx-real-world-utility" name="Real-World Utility Layer"
+      rule="Platform evolution should connect in-app progress signals to real-world contexts (for example profile integrations and practical skill proof)."
+      enforcement="may"
+    >
+      Product value increases when learning signals transfer outside the app.
+      <Logic id="dlg-sx-real-world-utility-logic" name="Utility Integration Logic">
+        Surface verified progress metadata in user-controlled external integrations.
+      </Logic>
+    </Policy>
+  </Section>
+
+  <Link id="dlg-sx-to-core" from="dlg-subject-expansion" to="dlg-core-learning" relationship="depends-on"
+    description="All subject surfaces rely on the shared lesson-loop architecture."
+  >
+    Subject expansion depends on resilient core lesson architecture.
+  </Link>
+  <Link id="dlg-sx-to-ai" from="dlg-subject-expansion" to="dlg-ai-practice" relationship="extends"
+    description="AI tutoring capabilities can expand beyond core language conversation over time."
+  >
+    AI patterns can be reused as subjects and modalities expand.
+  </Link>
+</Feature>

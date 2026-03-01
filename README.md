@@ -11,20 +11,28 @@ Product intent lives in natural language documents — PRDs, Google Docs, Notion
 Product Model introduces a structured MDX-based grammar where Product Managers author `.product.mdx` files using typed blocks, and tooling validates, parses, and builds a JSON AST from them.
 
 ```mdx
-<Feature id="checkout" name="Checkout Flow" status="approved" priority="p0">
+<Feature id="checkout" name="Checkout Flow">
+  Checkout flow from cart validation to payment completion.
   <Definition
     id="cart-item"
     name="Cart Item"
     version="1.0.0"
     fields='[{"name":"productId","type":"string","required":true},
              {"name":"quantity","type":"number","required":true}]'
-  />
+  >
+    Line-item contract used across checkout operations.
+  </Definition>
   <Policy
     id="max-qty"
     name="Max Quantity"
     rule="A single cart item cannot exceed 99 units"
     enforcement="must"
-  />
+  >
+    Cap per-item quantity to protect inventory and fraud checks.
+    <Logic id="max-qty-logic" name="Quantity Guard">
+      Reject updates where requested quantity exceeds 99.
+    </Logic>
+  </Policy>
 </Feature>
 ```
 
@@ -80,13 +88,15 @@ Workspace build output includes:
 
 | Block          | Children                                              | Required Fields                   |
 | -------------- | ----------------------------------------------------- | --------------------------------- |
-| **Feature**    | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name`, `status`            |
-| **Section**    | Section, Definition, Policy, Constraint, Link, Metric | `id`, `name`                      |
+| **Feature**    | Section, Definition, Policy, Constraint, Link, Logic  | `id`, `name`                      |
+| **Section**    | Section, Definition, Policy, Constraint, Link         | `id`, `name`                      |
 | **Definition** | —                                                     | `id`, `name`, `version`, `fields` |
-| **Policy**     | —                                                     | `id`, `name`, `rule`              |
+| **Policy**     | Logic                                                 | `id`, `name`, `rule`              |
 | **Constraint** | —                                                     | `id`, `name`, `condition`         |
 | **Link**       | —                                                     | `from`, `to`, `relationship`      |
-| **Metric**     | —                                                     | `id`, `name`                      |
+| **Logic**      | —                                                     | `id`, `name`                      |
+
+All blocks support optional plain-text body content for human-readable descriptions.
 
 ## Field Types
 
@@ -111,7 +121,6 @@ Product Model describes itself using its own grammar. See [`models/product-model
 
 ## Roadmap
 
-- **Metric block** — KPIs and success criteria with targets
 - **Journey modeling** — user flow sequences across features
 - **Code generation** — generate TypeScript types from Definitions
 - **AI-assisted editing** — LLM-powered authoring and review
