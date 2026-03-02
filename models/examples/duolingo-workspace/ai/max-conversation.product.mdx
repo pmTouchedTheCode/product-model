@@ -17,7 +17,40 @@
     >
       Adaptive tutoring improves learner confidence and progression.
       <Logic id="dlg-ai-video-call-personalization-logic" name="Adaptive Prompt Logic">
-        Select prompt complexity from learner level and recent error patterns.
+        Select prompt complexity from learner level and recent error patterns. For A1-A2 learners, use simple sentence structures with vocabulary from completed units. For B1+, introduce open-ended questions, idiomatic expressions, and multi-turn reasoning. Adjust mid-conversation if the learner struggles for more than 10 seconds without responding.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ai-session-duration" name="Session Duration Limits"
+      rule="Video call sessions must have a maximum duration and provide a graceful wind-down experience"
+      enforcement="must"
+    >
+      Prevents infinite sessions that consume excessive compute resources and degrade the learning experience through fatigue.
+      <Logic id="dlg-ai-session-time-limit" name="Session Time Limit Logic">
+        Maximum session duration is 15 minutes for standard calls and 25 minutes for topic-based deep dives. At 2 minutes before the limit, Lily naturally transitions to a wrap-up phase with a summary of what was practiced.
+      </Logic>
+      <Logic id="dlg-ai-session-daily-cap" name="Daily Session Cap Logic">
+        Limit to 5 video call sessions per day per user. After the cap is reached, show a message encouraging review of today's transcripts instead. Reset the counter at midnight in the user's local timezone.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ai-connection-failure" name="Connection Failure Handling"
+      rule="If the real-time connection drops during a video call, the system must attempt reconnection and preserve session state"
+      enforcement="must"
+    >
+      Network instability should not destroy a learning session or frustrate the user.
+      <Logic id="dlg-ai-reconnect" name="Reconnection Logic">
+        On connection drop, display a "Reconnecting..." overlay and attempt reconnection every 3 seconds for up to 30 seconds. Preserve the conversation transcript and session timer state locally. On successful reconnect, resume from the last exchanged message with a brief "Welcome back" transition from Lily.
+      </Logic>
+      <Logic id="dlg-ai-session-recovery" name="Session Recovery Logic">
+        If reconnection fails after 30 seconds, save the partial session with transcript and XP for completed exchanges. Award proportional XP (minimum 50% if at least 2 minutes of conversation occurred). Offer the user a "Resume Topic" option that starts a new session with the same conversation context.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ai-pronunciation-feedback" name="Pronunciation Feedback"
+      rule="Real-time pronunciation feedback should highlight specific phonemes the learner struggles with, not just overall accuracy"
+      enforcement="should"
+    >
+      Phoneme-level feedback accelerates spoken language improvement more effectively than sentence-level scores.
+      <Logic id="dlg-ai-phoneme-scoring" name="Phoneme Scoring Logic">
+        Run speech-to-text with phoneme alignment. Compare detected phonemes against target pronunciation model. Highlight phonemes scoring below 60% accuracy in the real-time transcript with a colored underline. After the session, aggregate phoneme scores into a pronunciation report showing the 3 weakest sounds with audio examples.
       </Logic>
     </Policy>
   </Section>
@@ -29,10 +62,48 @@
     >
       Defines AI roleplay scenario generation and scoring behavior.
     </Definition>
+    <Policy id="dlg-ai-scenario-difficulty" name="Scenario Difficulty Progression"
+      rule="Roleplay scenarios must progress in difficulty aligned with the learner's path level and should not introduce vocabulary or grammar beyond the next unit"
+      enforcement="must"
+    >
+      Ensures roleplay reinforces learning rather than overwhelming with unfamiliar content.
+      <Logic id="dlg-ai-scenario-selection" name="Scenario Selection Logic">
+        Query the learner's completed units and current unit progress. Select scenarios that use vocabulary and grammar from completed units plus up to 20% new items from the current unit. Tag each scenario with required vocabulary set for post-session review.
+      </Logic>
+      <Logic id="dlg-ai-scenario-fallback" name="Scenario Difficulty Fallback Logic">
+        If the learner fails to produce meaningful responses in 3 consecutive turns, reduce scenario complexity: switch to guided mode where Lily provides sentence starters and vocabulary hints. Log the difficulty mismatch for scenario calibration feedback.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ai-content-safety" name="AI Content Safety"
+      rule="All AI-generated conversation content must be filtered for inappropriate, harmful, or off-topic material before presentation to the learner"
+      enforcement="must"
+    >
+      Protects learners (including minors) from harmful or inappropriate AI outputs.
+      <Logic id="dlg-ai-output-filter" name="Output Filtering Logic">
+        Pass all AI-generated text through a content safety classifier before rendering. Block responses that contain profanity, violence, sexual content, or hate speech. Replace blocked responses with a neutral redirect ("Let's talk about something else!") and log the incident for review.
+      </Logic>
+      <Logic id="dlg-ai-input-guard" name="Input Guardrail Logic">
+        Monitor learner input for attempts to derail the conversation into inappropriate topics. If detected, gently redirect back to the learning scenario. After 3 redirect attempts, end the session with a message explaining the session focus. Do not penalize the learner's streak or XP.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ai-explanation-depth" name="Grammar Explanation Depth"
+      rule="When a learner asks 'why' about a grammar correction, the AI should provide a concise rule explanation with 1-2 examples"
+      enforcement="should"
+    >
+      Explanation depth should be sufficient for understanding without turning conversation practice into a grammar lecture.
+      <Logic id="dlg-ai-explanation-logic" name="Explanation Generation Logic">
+        On learner query about a correction, generate a 2-3 sentence explanation of the underlying rule. Include one correct example and one common mistake example. If the learner asks for more detail, offer a link to the relevant grammar tip in the lesson path rather than expanding inline.
+      </Logic>
+    </Policy>
     <Constraint id="dlg-ai-human-review" name="Human-in-the-Loop Safety"
       condition="AI-generated learning prompts and responses should be regularly reviewed by curriculum experts for quality and tone."
     >
       Curriculum experts should continuously evaluate AI quality and tone.
+    </Constraint>
+    <Constraint id="dlg-ai-latency" name="Response Latency"
+      condition="AI response latency must remain under 2 seconds for real-time conversation to feel natural."
+    >
+      High latency breaks conversational flow and discourages continued practice.
     </Constraint>
   </Section>
 

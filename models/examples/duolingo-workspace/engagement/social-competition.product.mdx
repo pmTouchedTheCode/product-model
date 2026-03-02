@@ -1,62 +1,99 @@
-{/* Duolingo Workspace Example — Social and Competition */}
-{/* research snapshot: 2026-03-01 */}
+{/* title: Social Competition */}
+{/* version: 1.0.0 */}
 
 <Feature id="dlg-social-engagement" name="Social and Competition Features">
   Competitive and collaborative loops that increase recurring engagement.
 
   <Section id="dlg-se-leaderboards" name="Leaderboards and Leagues">
     Weekly competition system with behavior-based cohorting.
-    <Definition id="dlg-se-league-cycle" name="League Cycle" version="1.0.0"
-      fields='[{"name":"seasonCadence","type":"enum","required":true,"enumValues":["weekly"]},{"name":"resetDayPolicy","type":"string","required":true},{"name":"leagueCount","type":"number","required":true},{"name":"matchingBasis","type":"string","required":true}]'
-    >
+    <Definition id="dlg-se-league-cycle" name="League Cycle" version="1.0.0" fields='[{"name":"seasonCadence","type":"enum","required":true,"enumValues":["weekly"]},{"name":"resetDayPolicy","type":"string","required":true},{"name":"leagueCount","type":"number","required":true},{"name":"matchingBasis","type":"string","required":true}]'>
       Defines weekly league cadence and ranking model.
     </Definition>
-    <Policy id="dlg-se-fair-matching" name="Fair Weekly Matching"
-      rule="Weekly cohorts should be matched using similar study behavior and comparable time-zone windows."
-      enforcement="must"
-    >
+    <Policy id="dlg-se-fair-matching" name="Fair Weekly Matching" rule="Weekly cohorts should be matched using similar study behavior and comparable time-zone windows." enforcement="must">
       Matching fairness improves competition credibility and retention.
       <Logic id="dlg-se-fair-matching-logic" name="Cohort Match Logic">
-        Group users by recency, activity level, and compatible reset windows.
+        Group users by recency, activity level, and compatible reset windows. Specifically, bucket users into activity tiers (1-3 sessions/week, 4-6, 7+) and match within the same tier. Ensure at least 80% of cohort members share a reset-window overlap of 6+ hours to prevent time-zone advantage.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-anti-cheat" name="Leaderboard Anti-Cheat"
+      rule="XP earned through repetitive low-effort actions must be discounted in leaderboard scoring to prevent gaming"
+      enforcement="must"
+    >
+      Protects competitive integrity and ensures leaderboard position reflects genuine learning effort.
+      <Logic id="dlg-se-xp-discount" name="XP Discount Logic">
+        If a user repeats the same lesson more than 3 times in a 24-hour period, discount subsequent XP from that lesson by 80% for leaderboard purposes (full XP still counts for streak and daily goal). Flag accounts earning more than 500 XP/hour for review. Bot-pattern detection: if answer latency is consistently under 0.5 seconds per question for 10+ questions, flag for automated review.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-demotion-protection" name="Demotion Protection"
+      rule="Users returning from inactivity should receive temporary demotion protection to reduce re-engagement anxiety"
+      enforcement="should"
+    >
+      Fear of demotion after a break discourages users from returning to the app.
+      <Logic id="dlg-se-demotion-shield" name="Demotion Shield Logic">
+        If a user was inactive for 3+ days and returns during an active league week, grant a one-time demotion shield for that week. The shield prevents relegation to a lower league regardless of final rank. Display the shield as a visible badge next to their leaderboard position. Limit to one shield per 30 days.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-promotion-rewards" name="League Promotion Rewards"
+      rule="Advancing to a higher league should award a meaningful reward and celebratory experience"
+      enforcement="should"
+    >
+      Tangible promotion rewards reinforce the effort required to advance and create positive emotional anchors.
+      <Logic id="dlg-se-promotion-logic" name="Promotion Reward Logic">
+        On promotion, award gems scaled by league level (Bronze: 50, Silver: 75, Gold: 100, Diamond: 200). Show a full-screen celebration animation with the new league badge. Unlock the league badge for display on the user's public profile. For reaching Diamond league, additionally award an exclusive cosmetic item.
       </Logic>
     </Policy>
   </Section>
 
   <Section id="dlg-se-friends-quests" name="Friends Quests and Friend Streaks">
     Shared goals and friend commitments layered onto individual study behavior.
-    <Definition id="dlg-se-friends-quest" name="Friends Quest" version="1.0.0"
-      fields='[{"name":"questWindowDays","type":"number","required":true},{"name":"assignmentMode","type":"enum","required":true,"enumValues":["random-friend-pair","universal-matching"]},{"name":"goalType","type":"enum","required":true,"enumValues":["xp","perfect-lessons","mixed"]},{"name":"rewardType","type":"string","required":true}]'
-    >
+    <Definition id="dlg-se-friends-quest" name="Friends Quest" version="1.0.0" fields='[{"name":"questWindowDays","type":"number","required":true},{"name":"assignmentMode","type":"enum","required":true,"enumValues":["random-friend-pair","universal-matching"]},{"name":"goalType","type":"enum","required":true,"enumValues":["xp","perfect-lessons","mixed"]},{"name":"rewardType","type":"string","required":true}]'>
       Quest template definition for paired goals.
     </Definition>
-    <Definition id="dlg-se-friend-streak" name="Friend Streak" version="1.0.0"
-      fields='[{"name":"maxConcurrentFriends","type":"number","required":true},{"name":"dailyActionRequired","type":"boolean","required":true},{"name":"inviteAccepted","type":"boolean","required":true}]'
-    >
+    <Definition id="dlg-se-friend-streak" name="Friend Streak" version="1.0.0" fields='[{"name":"maxConcurrentFriends","type":"number","required":true},{"name":"dailyActionRequired","type":"boolean","required":true},{"name":"inviteAccepted","type":"boolean","required":true}]'>
       Tracks mutual daily study commitments between friends.
     </Definition>
-    <Policy id="dlg-se-quest-timebox" name="Quest Timebox"
-      rule="Friends Quests should remain short, with a five-day completion window to keep urgency and momentum."
-      enforcement="must"
-    >
+    <Policy id="dlg-se-quest-timebox" name="Quest Timebox" rule="Friends Quests should remain short, with a five-day completion window to keep urgency and momentum." enforcement="must">
       Timeboxed quests increase completion urgency.
       <Logic id="dlg-se-quest-timebox-logic" name="Quest Deadline Logic">
-        Automatically mark quest failed or complete at the end of day five.
+        Automatically mark quest failed or complete at the end of day five (midnight in the earlier timezone of the two participants). Send a reminder notification on day 3 if progress is below 50%. On day 5, send a final push if the quest is within 20% of completion to encourage a last-effort sprint.
       </Logic>
     </Policy>
-    <Policy id="dlg-se-friend-streak-cap" name="Friend Streak Scalability"
-      rule="Friend Streak should support up to five concurrent friend commitments per learner."
-      enforcement="should"
-    >
+    <Policy id="dlg-se-friend-streak-cap" name="Friend Streak Scalability" rule="Friend Streak should support up to five concurrent friend commitments per learner." enforcement="should">
       Cap concurrent streak commitments to prevent overwhelm.
       <Logic id="dlg-se-friend-streak-cap-logic" name="Friend Streak Capacity Logic">
-        Reject new friend streak creation when active count reaches five.
+        Reject new friend streak creation when active count reaches five. Show a message listing active friend streaks and suggesting the user drop one before starting another. Sort displayed friend streaks by streak length (longest first) so users can make an informed choice about which to keep.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-inactive-friend-handling" name="Inactive Friend Handling"
+      rule="If one participant in a friend streak becomes inactive for 3+ days, the other participant should not be penalized"
+      enforcement="must"
+    >
+      Prevents frustration when a friend's disengagement threatens the active user's social streak.
+      <Logic id="dlg-se-inactive-detection" name="Inactive Friend Detection Logic">
+        If a friend streak partner has not completed any lesson for 3 consecutive days, pause the friend streak (freeze it without breaking). Notify the active user that the streak is paused due to partner inactivity. Send a nudge notification to the inactive partner. If inactivity continues beyond 7 days, auto-dissolve the friend streak and award the active user a consolation reward of 25 gems.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-quest-notification-cadence" name="Quest Notification Cadence"
+      rule="Quest-related notifications must be limited to avoid notification fatigue while maintaining engagement"
+      enforcement="should"
+    >
+      Too many quest notifications cause muting, while too few cause missed deadlines.
+      <Logic id="dlg-se-quest-notification-logic" name="Quest Notification Logic">
+        Per active quest, send at most 1 notification per day. Priority order: (1) partner completed their part — celebrate and nudge, (2) deadline approaching with incomplete progress, (3) new quest available. Never stack quest notifications with streak notifications in the same hour — delay the lower-priority one by 2 hours.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-se-quest-reward-fairness" name="Quest Reward Fairness"
+      rule="Both participants in a friend quest must contribute meaningfully to earn the reward"
+      enforcement="should"
+    >
+      Prevents free-riding where one user does all the work and the other collects the reward.
+      <Logic id="dlg-se-quest-contribution" name="Contribution Check Logic">
+        Track individual contribution as a percentage of the shared goal. If one participant contributes less than 25% of the total goal, they receive a reduced reward (50% of the standard reward). The higher contributor always receives the full reward. Display contribution split in the quest progress UI so both users can see relative effort.
       </Logic>
     </Policy>
   </Section>
 
-  <Link id="dlg-se-to-motivation" from="dlg-social-engagement" to="dlg-motivation-loop" relationship="implements"
-    description="Social mechanics operationalize the motivation strategy through accountability and competition."
-  >
+  <Link id="dlg-se-to-motivation" from="dlg-social-engagement" to="dlg-motivation-loop" relationship="implements">
     Social features operationalize motivation through peer interaction.
   </Link>
 </Feature>

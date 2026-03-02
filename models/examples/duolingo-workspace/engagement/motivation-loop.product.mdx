@@ -17,7 +17,43 @@
     >
       Prevents streak-loss churn due to occasional missed sessions.
       <Logic id="dlg-ml-streak-freeze-logic" name="Streak Freeze Consumption Logic">
-        On missed day, consume one equipped freeze before resetting streak count.
+        On missed day, consume one equipped freeze before resetting streak count. Freeze consumption is evaluated at midnight in the user's local timezone. If multiple freezes are equipped and multiple days are missed consecutively, consume one freeze per missed day up to the equipped limit.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ml-streak-milestone-rewards" name="Streak Milestone Rewards"
+      rule="Users should receive progressive rewards at streak milestones to reinforce long-term consistency"
+      enforcement="should"
+    >
+      Celebrates consistency at increasing intervals to maintain motivation beyond the first week.
+      <Logic id="dlg-ml-milestone-schedule" name="Milestone Reward Schedule Logic">
+        Award rewards at streak milestones: 3, 7, 14, 30, 50, 100, 200, 365 days. Rewards escalate in value: gems at early milestones, cosmetic items at mid-range, exclusive badges and streak shields at high milestones. Display a celebratory animation and share prompt at each milestone.
+      </Logic>
+      <Logic id="dlg-ml-milestone-notification" name="Milestone Approach Notification Logic">
+        When a user is within 1 day of a milestone, send a push notification highlighting the upcoming achievement. If the user has not completed their daily goal by 8 PM local time on a milestone-eve day, send a reminder with the specific milestone they are about to reach.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ml-streak-restoration" name="Streak Restoration"
+      rule="Users who lose their streak should have a time-limited option to restore it by paying gems or completing a challenge"
+      enforcement="should"
+    >
+      Provides a recovery mechanism that reduces the emotional cost of streak loss while maintaining its value.
+      <Logic id="dlg-ml-streak-restore-window" name="Restoration Window Logic">
+        Offer streak restoration within 24 hours of streak reset. Cost scales with streak length: base cost of 200 gems for streaks under 30 days, scaling up to 1000 gems for streaks over 365 days. Alternatively, offer a challenge option: complete 2 full lessons within 4 hours to restore for free.
+      </Logic>
+      <Logic id="dlg-ml-streak-restore-limit" name="Restoration Frequency Limit">
+        Allow at most 2 paid restorations per 30-day period to prevent devaluing the streak mechanic. The free challenge restoration has no frequency limit but is only available to users with streaks longer than 7 days.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ml-daily-goal" name="Daily Goal Configuration"
+      rule="Users must be able to set a daily XP goal that determines when their streak day is counted as complete"
+      enforcement="must"
+    >
+      Personalizes the commitment level and helps learners build a sustainable habit at their own pace.
+      <Logic id="dlg-ml-daily-goal-tiers" name="Daily Goal Tier Logic">
+        Offer four daily goal tiers: Casual (10 XP), Regular (20 XP), Serious (30 XP), Intense (50 XP). Default new users to Regular. Allow goal changes at any time, but if a user lowers their goal after partially completing a higher goal, credit their current XP toward the new lower goal.
+      </Logic>
+      <Logic id="dlg-ml-daily-goal-nudge" name="Goal Adjustment Nudge Logic">
+        If a user consistently exceeds their goal by 2x for 7 consecutive days, suggest upgrading. If a user misses their goal 4 out of 7 days, suggest downgrading. Present the suggestion as a non-blocking prompt on the home screen.
       </Logic>
     </Policy>
   </Section>
@@ -35,7 +71,22 @@
     >
       Balances challenge with progress continuity.
       <Logic id="dlg-ml-energy-balance-logic" name="Adaptive Energy Logic">
-        Reduce penalty intensity for beginners and accelerate recovery after correct streaks.
+        Reduce penalty intensity for beginners (first 14 days): consume 0.5 energy per incorrect answer instead of 1.0. After day 14, transition to normal energy cost. For correct streaks of 5 or more within a session, pause energy consumption for the next 3 questions as a momentum reward.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ml-energy-refill" name="Energy Refill Options"
+      rule="Free learners must have multiple paths to restore energy without paying money"
+      enforcement="must"
+    >
+      Ensures free users always have a way to continue learning even when energy is depleted.
+      <Logic id="dlg-ml-energy-time-refill" name="Time-Based Refill Logic">
+        Regenerate 1 energy unit every 20 minutes, up to the maximum of 5. Display a countdown timer in the UI showing when the next unit will be available.
+      </Logic>
+      <Logic id="dlg-ml-energy-ad-refill" name="Ad-Based Refill Logic">
+        Offer a rewarded video ad option to instantly restore 1 energy unit. Limit ad-based refills to 3 per day to prevent ad fatigue. After the daily ad limit, show only the time-based or gem-based refill options.
+      </Logic>
+      <Logic id="dlg-ml-energy-gem-refill" name="Gem-Based Refill Logic">
+        Allow a full energy refill for 350 gems. This option has no daily limit but is gated by gem availability. Show gem balance alongside the refill button so users can make an informed decision.
       </Logic>
     </Policy>
     <Constraint id="dlg-ml-energy-recovery" name="Energy Recovery"
@@ -43,6 +94,36 @@
     >
       Free users should always have non-subscriber recovery options.
     </Constraint>
+    <Constraint id="dlg-ml-energy-never-zero" name="Minimum Learning Access"
+      condition="A user who has been locked out of lessons for more than 4 hours should receive enough energy for at least one lesson."
+    >
+      Prevents extended lockout periods that cause learners to disengage permanently.
+    </Constraint>
+  </Section>
+
+  <Section id="dlg-ml-notifications" name="Push Notification Strategy">
+    Notification cadence and personalization for habit reinforcement.
+    <Policy id="dlg-ml-notification-timing" name="Smart Notification Timing"
+      rule="Push notifications should be sent at the user's historically optimal study time, not at a fixed schedule"
+      enforcement="should"
+    >
+      Personalized timing dramatically improves notification open rates and lesson completion.
+      <Logic id="dlg-ml-notification-time-calc" name="Optimal Time Calculation Logic">
+        Analyze the user's last 14 days of lesson start times. Calculate the median start time as the notification send time. If the user has no recent activity, default to 7 PM local time. Update the optimal time weekly.
+      </Logic>
+      <Logic id="dlg-ml-notification-quiet" name="Quiet Hours Logic">
+        Never send notifications between 10 PM and 7 AM local time, regardless of calculated optimal time. If optimal time falls in quiet hours, shift to the nearest allowed boundary.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-ml-notification-escalation" name="Notification Escalation"
+      rule="Notification urgency and content should escalate based on the user's streak risk and inactivity duration"
+      enforcement="should"
+    >
+      Graduated messaging matches the severity of potential disengagement.
+      <Logic id="dlg-ml-notification-tiers" name="Escalation Tier Logic">
+        Tier 1 (daily, goal incomplete by 6 PM): gentle reminder with XP progress. Tier 2 (streak at risk, 2 hours before midnight): urgent message highlighting streak length and freeze status. Tier 3 (1 day inactive): re-engagement message with a personalized stat ("You learned 47 words last week"). Tier 4 (3+ days inactive): emotional appeal from Duo character with a simplified re-entry action. After 14 days inactive, reduce frequency to weekly to avoid annoyance.
+      </Logic>
+    </Policy>
   </Section>
 
   <Link id="dlg-ml-to-social" from="dlg-motivation-loop" to="dlg-social-engagement" relationship="depends-on"

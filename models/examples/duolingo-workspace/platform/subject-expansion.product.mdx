@@ -17,7 +17,37 @@
     >
       Habit continuity should survive subject switching.
       <Logic id="dlg-sx-cross-subject-progression-logic" name="Cross-Subject Habit Logic">
-        Preserve streak and daily-goal credit across all eligible subjects.
+        Preserve streak and daily-goal credit across all eligible subjects. A lesson completed in math counts toward the same daily XP goal as a language lesson. Display a unified progress bar on the home screen that aggregates XP from all active subjects.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sx-new-subject-onboarding" name="New Subject Onboarding"
+      rule="When a user starts a new subject, they must receive a tailored onboarding that explains how the subject differs from their primary course"
+      enforcement="should"
+    >
+      Prevents confusion when UX patterns differ across subjects (e.g., music exercises feel different from language exercises).
+      <Logic id="dlg-sx-onboarding-flow" name="Subject Onboarding Flow Logic">
+        On first entry to a new subject, show a 3-screen onboarding carousel: (1) what this subject teaches, (2) how exercises work differently, (3) how progress integrates with their existing streak and XP. Allow skip after the first screen. Do not show onboarding again once completed.
+      </Logic>
+      <Logic id="dlg-sx-onboarding-recommendation" name="Subject Recommendation Logic">
+        After a user maintains a 14-day streak in their primary subject, surface a non-blocking recommendation card for a complementary subject based on their profile (e.g., music for language learners interested in culture, math for younger learners). Limit recommendations to once per 30 days.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sx-shared-xp-economy" name="Shared XP Economy"
+      rule="XP earned across all subjects must use a unified economy that feeds into a single leaderboard and streak system"
+      enforcement="must"
+    >
+      Prevents fragmentation of the motivation loop across subjects.
+      <Logic id="dlg-sx-xp-normalization" name="XP Normalization Logic">
+        Normalize XP per lesson across subjects so that a standard lesson in any subject awards a comparable base XP (10 XP for a standard lesson). Bonus XP (combo bonuses, perfect scores) may vary by subject difficulty. Log the subject source for each XP award so analytics can break down engagement per subject.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sx-beta-subject-access" name="Beta Subject Access"
+      rule="New subjects in beta should be accessible to all users with clear beta labeling and a feedback mechanism"
+      enforcement="should"
+    >
+      Broad beta access generates faster feedback signals while setting appropriate quality expectations.
+      <Logic id="dlg-sx-beta-labeling" name="Beta Label Logic">
+        Display a "Beta" badge on the subject card and on every lesson within the subject. Show a persistent feedback button during beta lessons that opens a 3-question micro-survey (clarity, difficulty, enjoyment). Aggregate survey scores daily and alert the content team if any metric drops below 3.5/5.
       </Logic>
     </Policy>
   </Section>
@@ -35,7 +65,28 @@
     >
       Product value increases when learning signals transfer outside the app.
       <Logic id="dlg-sx-real-world-utility-logic" name="Utility Integration Logic">
-        Surface verified progress metadata in user-controlled external integrations.
+        Surface verified progress metadata in user-controlled external integrations. Support export to LinkedIn Learning profile, Apple Health (for study habit tracking), and a shareable public profile page showing completed courses and proficiency levels.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sx-content-quality-gate" name="Content Quality Gate"
+      rule="New courses and units must pass a quality gate review before general availability"
+      enforcement="must"
+    >
+      Prevents low-quality content from degrading the platform's learning reputation.
+      <Logic id="dlg-sx-quality-gate-criteria" name="Quality Gate Criteria Logic">
+        Before GA release, a new course must meet: (1) at least 200 beta users have completed the first 3 units, (2) average lesson completion rate exceeds 75%, (3) average feedback score exceeds 3.8/5, (4) error report rate is below 2 per 100 lessons. Courses failing any criterion remain in beta with a content improvement plan.
+      </Logic>
+      <Logic id="dlg-sx-quality-gate-rollback" name="Quality Rollback Logic">
+        If a GA course's metrics drop below quality thresholds for 7 consecutive days (e.g., completion rate falls below 60%), automatically demote it back to beta status. Notify enrolled users that the course is being improved and their progress will be preserved.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sx-backwards-compat" name="Backwards Compatibility"
+      rule="Content updates to existing courses must not invalidate or reset learner progress on completed units"
+      enforcement="must"
+    >
+      Protects the learner's investment in completed work and prevents trust erosion.
+      <Logic id="dlg-sx-compat-logic" name="Content Migration Logic">
+        When units are restructured, map completed exercises to their nearest equivalents in the new structure. If an exercise is removed entirely, mark it as archived-completed (still counts toward progress). If new required exercises are added to a completed unit, mark the unit as "updated" with optional new content rather than resetting it to incomplete.
       </Logic>
     </Policy>
   </Section>

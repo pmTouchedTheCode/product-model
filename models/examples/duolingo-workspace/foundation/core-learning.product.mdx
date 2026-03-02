@@ -22,13 +22,54 @@
     >
       Maintains predictable and pedagogically sound progression.
       <Logic id="dlg-cl-sequenced-logic" name="Path Unlock Logic">
-        Unlock the next lesson after mastery threshold is reached on current step.
+        Unlock the next lesson after mastery threshold is reached on current step. Mastery is calculated as a weighted score: 70% accuracy on exercises plus 30% completion rate. If mastery score is below 0.7, the step remains locked and a review prompt appears.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-cl-adaptive-difficulty" name="Adaptive Difficulty"
+      rule="Exercise difficulty within a lesson must adapt to the learner's real-time performance to maintain optimal challenge"
+      enforcement="must"
+    >
+      Keeps learners in a flow state by avoiding both frustration and boredom.
+      <Logic id="dlg-cl-difficulty-up" name="Difficulty Escalation Logic">
+        If a learner answers 5 consecutive questions correctly within a lesson, increase the difficulty tier for remaining exercises (e.g., switch from multiple choice to free recall, or reduce hint availability).
+      </Logic>
+      <Logic id="dlg-cl-difficulty-down" name="Difficulty Reduction Logic">
+        If a learner makes 3 errors in a 5-question window, reduce difficulty by introducing more scaffolding: show word banks, increase hint frequency, or substitute with recognition-based exercises. Never reduce below the minimum difficulty for the unit level.
+      </Logic>
+      <Logic id="dlg-cl-difficulty-persistence" name="Difficulty Memory Logic">
+        Persist the learner's effective difficulty level per skill area across sessions. On session start, initialize difficulty from the stored level rather than the unit default.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-cl-test-out" name="Placement and Test-Out"
+      rule="Learners should be able to skip content they already know via placement tests or unit test-outs"
+      enforcement="should"
+    >
+      Respects prior knowledge and reduces friction for returning or advanced learners.
+      <Logic id="dlg-cl-placement-test" name="Placement Test Logic">
+        On first course entry, offer a placement test covering key skills from each unit tier. Score determines the starting unit. Require 80% accuracy per tier to skip. Place the learner at the first unit where accuracy drops below threshold.
+      </Logic>
+      <Logic id="dlg-cl-unit-test-out" name="Unit Test-Out Logic">
+        Allow learners to attempt a unit test-out at any time. The test covers all skill areas within the unit. Require 90% accuracy to skip the unit. On failure, show which skill areas need practice and keep the unit locked. Limit test-out attempts to once per 24 hours per unit to prevent brute-forcing.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-cl-error-correction" name="Error Correction Feedback"
+      rule="Every incorrect answer must show the correct answer with a brief explanation before proceeding"
+      enforcement="must"
+    >
+      Immediate corrective feedback is essential for language acquisition and prevents error reinforcement.
+      <Logic id="dlg-cl-error-feedback" name="Error Feedback Display Logic">
+        On incorrect answer, display the correct answer highlighted in green. Show a one-sentence explanation of the grammar or vocabulary rule. For repeated errors on the same concept, add the item to a mistake queue that resurfaces it 2-3 exercises later in the same session.
       </Logic>
     </Policy>
     <Constraint id="dlg-cl-bite-sized-lessons" name="Bite-Sized Lessons"
       condition="A standard lesson should remain short enough for frequent daily completion and habit formation."
     >
       Session duration should support quick daily completion.
+    </Constraint>
+    <Constraint id="dlg-cl-offline-support" name="Offline Lesson Access"
+      condition="Learners must be able to complete at least 3 pre-downloaded lessons without network connectivity."
+    >
+      Supports commuters and learners in low-connectivity environments.
     </Constraint>
   </Section>
 
@@ -40,7 +81,28 @@
     >
       Learners need continuous access to prior content for retention.
       <Logic id="dlg-cl-review-logic" name="Review Eligibility Logic">
-        Expose review modules for all completed units and prioritize weak skills.
+        Expose review modules for all completed units and prioritize weak skills. Weak skills are identified by accuracy below 70% in recent sessions or items not practiced in the last 14 days.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-cl-spaced-repetition" name="Spaced Repetition Scheduling"
+      rule="Review items must be scheduled using spaced repetition intervals that adapt to individual retention patterns"
+      enforcement="must"
+    >
+      Optimizes long-term retention by timing reviews at the point of expected forgetting.
+      <Logic id="dlg-cl-sr-interval" name="Interval Calculation Logic">
+        Use a modified SM-2 algorithm: initial interval is 1 day after first correct recall, then 3 days, 7 days, 14 days, 30 days. Each incorrect recall resets the interval to 1 day. Ease factor adjusts based on response time — fast correct answers increase the multiplier, slow correct answers keep it neutral.
+      </Logic>
+      <Logic id="dlg-cl-sr-priority" name="Review Priority Logic">
+        Sort the review queue by urgency: items past their scheduled review date appear first, followed by items due today, then items due within 2 days. Within each tier, prioritize items with lower ease factors (harder to retain). Cap the daily review queue at 30 items to prevent review fatigue.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-cl-mistake-practice" name="Mistake-Based Practice"
+      rule="Frequently missed items should be surfaced in dedicated mistake practice sessions separate from the main path"
+      enforcement="should"
+    >
+      Targeted practice on weak areas accelerates mastery without slowing path progression.
+      <Logic id="dlg-cl-mistake-collection" name="Mistake Collection Logic">
+        Track items with error rate above 40% in the last 7 days. Aggregate into a practice set. When the set exceeds 10 items, prompt the learner with a dedicated mistake practice session on the home screen.
       </Logic>
     </Policy>
   </Section>

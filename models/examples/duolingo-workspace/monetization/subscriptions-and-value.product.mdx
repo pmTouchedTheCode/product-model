@@ -17,7 +17,7 @@
     >
       Defines baseline paid-tier convenience and retention value.
       <Logic id="dlg-sm-super-value-logic" name="Super Entitlement Logic">
-        Apply ad removal and unlimited energy entitlements immediately after subscription activation.
+        Apply ad removal and unlimited energy entitlements immediately after subscription activation. Unlock Practice Hub access including mistake review, listening practice, and speaking practice modules. If entitlement check fails, fall back to free tier with an error banner and retry silently every 5 minutes.
       </Logic>
     </Policy>
     <Policy id="dlg-sm-max-value" name="Max Value Proposition"
@@ -26,7 +26,40 @@
     >
       Positions Max as an advanced practice tier.
       <Logic id="dlg-sm-max-value-logic" name="Max Entitlement Logic">
-        Inherit all Super entitlements and unlock AI conversation modules.
+        Inherit all Super entitlements and unlock AI conversation modules (Video Call with Lily, roleplay scenarios). Max users also receive priority access to new AI features during beta rollouts.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-free-trial" name="Free Trial Conversion"
+      rule="New users should be offered a 14-day free trial of Super within their first 7 days of usage"
+      enforcement="should"
+    >
+      Lets users experience the value of paid features during their highest-engagement window.
+      <Logic id="dlg-sm-trial-offer-timing" name="Trial Offer Timing Logic">
+        Show trial offer after the user completes their 3rd lesson or on day 2, whichever comes first. Present as a non-blocking bottom sheet. If dismissed, show again once more after 3 days. Do not show to users who have previously been subscribers.
+      </Logic>
+      <Logic id="dlg-sm-trial-conversion-nudge" name="Trial End Conversion Logic">
+        On day 12 of the trial, send a push notification showing what the user will lose (e.g., "You used unlimited energy 23 times this week"). On day 13, show an in-app screen comparing free vs Super with personalized stats. On trial end, if not converted, immediately gate energy and show ads with a 50% discount offer valid for 48 hours.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-downgrade-handling" name="Subscription Downgrade"
+      rule="When a user downgrades from Max to Super or from Super to free, entitlements must transition gracefully without data loss"
+      enforcement="must"
+    >
+      Prevents frustration during voluntary downgrades and preserves goodwill for potential re-subscription.
+      <Logic id="dlg-sm-downgrade-grace" name="Downgrade Grace Period Logic">
+        On downgrade, maintain current tier entitlements until the end of the paid billing period. After expiration, transition to the lower tier. For Max-to-Super downgrades, retain AI conversation history as read-only. For Super-to-free downgrades, keep practice hub progress but lock access.
+      </Logic>
+      <Logic id="dlg-sm-downgrade-reactivation" name="Win-Back Offer Logic">
+        30 days after downgrade, if the user is still active, offer a personalized win-back discount (20% off for 3 months). If the user's engagement drops below 3 sessions per week post-downgrade, increase the discount to 30%.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-billing-failure" name="Billing Failure Handling"
+      rule="Failed payment renewals must not immediately revoke access; a grace period and retry sequence must be applied"
+      enforcement="must"
+    >
+      Involuntary churn from billing failures is a major revenue leak that can be reduced with retry logic.
+      <Logic id="dlg-sm-billing-retry" name="Payment Retry Logic">
+        On failed renewal, retry after 3 days, then 7 days, then 14 days. During the retry period, maintain full access with a subtle banner indicating a billing issue. After 3 failed retries, transition to free tier and send a final email with a direct link to update payment method.
       </Logic>
     </Policy>
   </Section>
@@ -38,11 +71,54 @@
     >
       Multi-seat subscription model with centralized billing.
     </Definition>
+    <Policy id="dlg-sm-family-member-management" name="Family Member Management"
+      rule="The plan manager must be able to add and remove members, and removed members should retain their learning progress on a free account"
+      enforcement="must"
+    >
+      Ensures member transitions are non-destructive and the plan manager has full control.
+      <Logic id="dlg-sm-family-add" name="Member Addition Logic">
+        Manager sends an invite link or email. Invitee accepts and is added to the plan. If the invitee already has an active individual subscription, prompt them to choose: keep individual plan or switch to family plan. Individual plan is paused (not cancelled) if they join the family.
+      </Logic>
+      <Logic id="dlg-sm-family-remove" name="Member Removal Logic">
+        On removal, the member's account transitions to free tier at the end of the current billing cycle. All learning data, streaks, and progress are preserved. Send a notification to the removed member explaining the change and offering an individual subscription.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-family-billing-owner" name="Billing Owner Transfer"
+      rule="The billing owner role should be transferable to another adult member of the family plan"
+      enforcement="should"
+    >
+      Prevents plan disruption when the original purchaser leaves or can no longer manage the plan.
+      <Logic id="dlg-sm-billing-transfer-logic" name="Billing Transfer Logic">
+        Current owner initiates transfer from plan settings. New owner must be an existing member aged 18+ and must confirm acceptance and enter their own payment method. Transfer completes at the next billing cycle. Both parties receive email confirmation.
+      </Logic>
+    </Policy>
     <Constraint id="dlg-sm-inclusion-constraint" name="Inclusive Group Access"
       condition="Family plan invites should support non-household groups while preserving account-level personalization."
     >
       Supports broader group learning without collapsing personalization.
     </Constraint>
+  </Section>
+
+  <Section id="dlg-sm-pricing-experimentation" name="Pricing and Packaging">
+    Pricing strategy and experimentation policies.
+    <Policy id="dlg-sm-price-localization" name="Regional Price Localization"
+      rule="Subscription prices must be localized based on the user's country and purchasing power"
+      enforcement="must"
+    >
+      Maximizes global accessibility while maintaining revenue in high-income markets.
+      <Logic id="dlg-sm-price-localization-logic" name="Price Localization Logic">
+        Maintain a price table indexed by country code and tier. Prices are set based on Big Mac Index-adjusted purchasing power parity with a floor of $1.99/month for Super in the lowest-income markets. Currency is determined by App Store / Play Store region. For web subscribers, use IP geolocation with currency override option.
+      </Logic>
+    </Policy>
+    <Policy id="dlg-sm-price-experiment" name="Pricing A/B Testing"
+      rule="Price changes must be validated through controlled experiments before global rollout"
+      enforcement="should"
+    >
+      Prevents revenue loss from untested price changes and ensures statistical rigor.
+      <Logic id="dlg-sm-price-experiment-logic" name="Price Experiment Logic">
+        Run experiments on new user cohorts only (never change price for existing subscribers mid-cycle). Require 95% confidence interval and minimum 14-day observation period. Primary metric is LTV at 90 days, not initial conversion rate. If experiment shows regression in LTV, auto-revert after review period.
+      </Logic>
+    </Policy>
   </Section>
 
   <Link id="dlg-sm-to-ai" from="dlg-subscription-monetization" to="dlg-ai-practice" relationship="depends-on"
