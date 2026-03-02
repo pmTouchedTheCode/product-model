@@ -49,6 +49,27 @@ pnpm add @product-model/core
 pnpm add -D @product-model/cli
 ```
 
+## Studio
+
+Product Studio is a visual editor for `.product.mdx` files. It lets you browse, edit, and validate your product model without touching raw MDX.
+
+### Features
+
+- **File browser** — browse all `.product.mdx` files in the `models/` directory
+- **Visual block editor** — view and edit blocks (Feature, Section, Policy, Logic, etc.) with inline forms
+- **Source panel** — toggle raw MDX source alongside the visual editor
+- **Drag-and-drop reordering** — rearrange blocks by dragging
+- **Live validation** — validate against the Product Model grammar with inline diagnostics
+- **Dark / light theme** — toggle between themes
+
+### Run locally
+
+```bash
+pnpm dev --filter @product-model/studio
+```
+
+Opens at [http://localhost:3000](http://localhost:3000).
+
 ## CLI Usage
 
 ### Validate a file
@@ -120,10 +141,11 @@ Product Model describes itself using its own grammar. See [`models/product-model
 
 ## Packages
 
-| Package                                | Description                           |
-| -------------------------------------- | ------------------------------------- |
-| [`@product-model/core`](packages/core) | Parser, validator, schemas, and types |
-| [`@product-model/cli`](packages/cli)   | CLI for validate and build commands   |
+| Package                                    | Description                           |
+| ------------------------------------------ | ------------------------------------- |
+| [`@product-model/core`](packages/core)     | Parser, validator, schemas, and types |
+| [`@product-model/cli`](packages/cli)       | CLI for validate and build commands   |
+| [`@product-model/studio`](apps/studio)     | Visual editor for product model files |
 
 ## Roadmap
 
