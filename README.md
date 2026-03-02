@@ -50,7 +50,9 @@ A visual editor for `.product.mdx` files — browse, edit, and validate without 
 - Live validation with diagnostics
 
 ```bash
-pnpm dev --filter @product-model/studio
+pm studio                    # launch on localhost:3000
+pm studio --port 4000        # custom port
+pm studio --root ./models    # point to a subdirectory
 ```
 
 ## CLI

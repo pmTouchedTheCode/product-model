@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from "citty";
 import { buildCommand } from "./commands/build.js";
+import { studioCommand } from "./commands/studio.js";
 import { validateCommand } from "./commands/validate.js";
 
 const main = defineCommand({
@@ -11,6 +12,7 @@ const main = defineCommand({
 	subCommands: {
 		validate: validateCommand,
 		build: buildCommand,
+		studio: studioCommand,
 	},
 });
 

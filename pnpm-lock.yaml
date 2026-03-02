@@ -120,6 +120,9 @@ importers:
       '@product-model/core':
         specifier: workspace:*
         version: link:../core
+      '@product-model/studio':
+        specifier: workspace:*
+        version: link:../../apps/studio
       citty:
         specifier: ^0.1.6
         version: 0.1.6

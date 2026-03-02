@@ -34,6 +34,8 @@ async function findWorkspaceRoot(startingCwd: string): Promise<string> {
 }
 
 export async function getWorkspaceRoot(): Promise<string> {
+	const envRoot = process.env.PRODUCT_MODEL_ROOT;
+	if (envRoot) return resolve(envRoot);
 	return findWorkspaceRoot(process.cwd());
 }
 

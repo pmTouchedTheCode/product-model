@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"@product-model/core": "workspace:*",
+		"@product-model/studio": "workspace:*",
 		"citty": "^0.1.6"
 	},
 	"devDependencies": {
