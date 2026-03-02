@@ -183,7 +183,7 @@ function StudioEditorBlock({
 	const badgeColor = blockTypeColors[block.type] ?? "";
 
 	return (
-		<div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-40")}>
+		<div ref={setNodeRef} style={style} className={cn("min-w-0", isDragging && "opacity-40")}>
 			<div
 				className={cn(
 					"rounded border transition-colors",
@@ -256,7 +256,7 @@ function StudioEditorBlock({
 
 				{/* Description preview (collapsed) */}
 				{!focused && block.description ? (
-					<div className="truncate px-3 pb-2 text-xs text-muted-foreground">
+					<div className="px-3 pb-2 text-xs leading-relaxed text-muted-foreground">
 						{block.description}
 					</div>
 				) : null}
@@ -980,10 +980,10 @@ export function StudioApp(): React.JSX.Element {
 				) : null}
 
 				{/* Main content area */}
-				<div className="flex min-h-0 flex-1 flex-col">
+				<div className="flex min-h-0 min-w-0 flex-1 flex-col">
 					{/* Toolbar */}
-					<div className="flex items-center justify-between border-b px-4 py-2">
-						<div className="flex items-center gap-3">
+					<div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
+						<div className="flex min-w-0 items-center gap-3">
 							<div className="flex items-center gap-2">
 								<Label className="text-xs text-muted-foreground">Title</Label>
 								<Input
@@ -1054,9 +1054,9 @@ export function StudioApp(): React.JSX.Element {
 					</div>
 
 					{/* Split content */}
-					<div className="flex min-h-0 flex-1">
+					<div className="flex min-h-0 min-w-0 flex-1">
 						{/* Block editor */}
-						<div className={cn("flex min-h-0 flex-1 flex-col", sourceOpen && "border-r")}>
+						<div className={cn("flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", sourceOpen && "border-r")}>
 							<div className="flex items-center gap-2 border-b px-4 py-1.5">
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
