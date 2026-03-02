@@ -1,3 +1,9 @@
+
+<p align="center">
+<img alt="Event Flyer - dark" src="https://github.com/user-attachments/assets/0fa16772-a16b-4f20-a224-c9471900c355#gh-light-mode-only">
+<img alt="Event Flyer - light" src="https://github.com/user-attachments/assets/6004d66a-3506-4b24-b373-3cacd740843f#gh-dark-mode-only">
+</p>
+
 # Product Model
 
 > **"Product Manager should write Product Model, not code."** (PMPM)
