@@ -53,6 +53,8 @@ pnpm add -D @product-model/cli
 
 Product Studio is a visual editor for `.product.mdx` files. It lets you browse, edit, and validate your product model without touching raw MDX.
 
+<img width="1470" height="834" alt="image" src="https://github.com/user-attachments/assets/58cbd5e4-52e4-4e99-9938-66b3e931c081" />
+
 ### Features
 
 - **File browser** — browse all `.product.mdx` files in the `models/` directory
