@@ -34,8 +34,8 @@ Product Model closes this gap. You author `.product.mdx` files using typed block
 ## Install
 
 ```bash
-pnpm add @product-model/core
-pnpm add -D @product-model/cli
+npm install -g @product-model/cli   # global CLI (includes Studio)
+pnpm add @product-model/core        # core library
 ```
 
 ## Studio
