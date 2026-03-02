@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
-const sans = Manrope({
+const sans = Inter({
 	subsets: ["latin"],
 	variable: "--font-sans",
 });
@@ -24,12 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className={cn(sans.variable, mono.variable, "font-[var(--font-sans)]")}>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
+				<ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
 					{children}
 				</ThemeProvider>
 			</body>
