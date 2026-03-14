@@ -5,7 +5,6 @@
 <Feature id="checkout" name="Checkout Flow">
   Comprehensive checkout flow from cart preparation to order confirmation.
 
-  {/* ── Actors ─────────────────────────────────────────────── */}
 
   <Actor id="guest-shopper" name="Guest Shopper"
     description="Unauthenticated visitor. No saved payment methods or address book."
@@ -17,7 +16,6 @@
     description="Internal automated system that performs risk scoring and velocity checks."
   />
 
-  {/* ── Outcomes ───────────────────────────────────────────── */}
 
   <Outcome id="checkout-conversion" name="Checkout Conversion Rate"
     metric="checkout_conversion_rate"
@@ -36,7 +34,6 @@
     description="Percentage of payment attempts that are declined, including soft declines."
   />
 
-  {/* ── Cart ───────────────────────────────────────────────── */}
 
   <Section id="cart" name="Shopping Cart">
     Captures line items and shopping constraints.
@@ -129,7 +126,6 @@
     />
   </Section>
 
-  {/* ── Payment ─────────────────────────────────────────────── */}
 
   <Section id="payment" name="Payment Processing">
     Manages payment method capture and gateway constraints.
@@ -222,7 +218,6 @@
     />
   </Section>
 
-  {/* ── Shipping ─────────────────────────────────────────────── */}
 
   <Section id="shipping" name="Shipping">
     Shipping destination and fulfillment option data.
@@ -277,7 +272,6 @@
     />
   </Section>
 
-  {/* ── Order Confirmation ───────────────────────────────────── */}
 
   <Section id="order-confirmation" name="Order Confirmation">
     Final order record and confirmation policies.
@@ -332,7 +326,6 @@
     />
   </Section>
 
-  {/* ── Cross-section dependencies ───────────────────────────── */}
 
   <Link id="cart-to-payment" from="cart" to="payment" relationship="depends-on"
     description="Cart must be finalized before payment can proceed"

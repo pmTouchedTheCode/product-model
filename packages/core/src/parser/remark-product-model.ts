@@ -101,8 +101,10 @@ function extractBlock(node: MdxJsxFlowElement): ExtractedBlock | null {
 
 	for (const child of node.children) {
 		if (isMdxJsxFlowElement(child)) {
-			// Collect native <Field /> children into fieldChildren instead of block children
-			if (child.name === "Field") {
+			// Collect native <Field /> children into fieldChildren, but only for Definition blocks.
+			// Allowing <Field /> under other block types would silently inject `fieldChildren` into
+			// strict schemas (e.g. Feature) causing Zod parse failures.
+			if (tagName === "Definition" && child.name === "Field") {
 				const fieldAttrs = extractRawAttributes(child);
 				if (!Array.isArray(attributes.fieldChildren)) {
 					attributes.fieldChildren = [];

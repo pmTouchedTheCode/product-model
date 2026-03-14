@@ -28,11 +28,13 @@ interface ScenarioReference {
 export function checkLinkIntegrity(document: PMDocument): ValidationDiagnostic[] {
 	const diagnostics: ValidationDiagnostic[] = [];
 	const allIds = new Set<string>();
+	const actorIds = new Set<string>();
+	const policyIds = new Set<string>();
 	const links: LinkTarget[] = [];
 	const actorRefs: ActorReference[] = [];
 	const scenarioRefs: ScenarioReference[] = [];
 
-	collectRefs(document.blocks, allIds, links, actorRefs, scenarioRefs);
+	collectRefs(document.blocks, allIds, actorIds, policyIds, links, actorRefs, scenarioRefs);
 
 	// ── Link from/to ──────────────────────────────────────────
 	for (const link of links) {
@@ -55,7 +57,7 @@ export function checkLinkIntegrity(document: PMDocument): ValidationDiagnostic[]
 	// ── Actor references (Policy / Constraint actor lists) ────
 	for (const ref of actorRefs) {
 		for (const actorId of ref.actorIds) {
-			if (!allIds.has(actorId)) {
+			if (!actorIds.has(actorId)) {
 				diagnostics.push({
 					severity: "error",
 					message: `${ref.context} actor "${actorId}" does not reference an existing Actor block ID`,
@@ -67,14 +69,14 @@ export function checkLinkIntegrity(document: PMDocument): ValidationDiagnostic[]
 
 	// ── Scenario policy / actor references ────────────────────
 	for (const ref of scenarioRefs) {
-		if (ref.policyId && !allIds.has(ref.policyId)) {
+		if (ref.policyId && !policyIds.has(ref.policyId)) {
 			diagnostics.push({
 				severity: "error",
-				message: `Scenario "policy" target "${ref.policyId}" does not reference an existing block ID`,
+				message: `Scenario "policy" target "${ref.policyId}" does not reference an existing Policy block ID`,
 				blockId: ref.blockId,
 			});
 		}
-		if (ref.actorId && !allIds.has(ref.actorId)) {
+		if (ref.actorId && !actorIds.has(ref.actorId)) {
 			diagnostics.push({
 				severity: "error",
 				message: `Scenario "actor" target "${ref.actorId}" does not reference an existing Actor block ID`,
@@ -89,6 +91,8 @@ export function checkLinkIntegrity(document: PMDocument): ValidationDiagnostic[]
 function collectRefs(
 	blocks: Block[],
 	allIds: Set<string>,
+	actorIds: Set<string>,
+	policyIds: Set<string>,
 	links: LinkTarget[],
 	actorRefs: ActorReference[],
 	scenarioRefs: ScenarioReference[],
@@ -96,6 +100,8 @@ function collectRefs(
 	for (const block of blocks) {
 		if ("id" in block && typeof block.id === "string") {
 			allIds.add(block.id);
+			if (block.type === "Actor") actorIds.add(block.id);
+			if (block.type === "Policy") policyIds.add(block.id);
 		}
 
 		if (block.type === "Link") {
@@ -119,7 +125,15 @@ function collectRefs(
 		}
 
 		if ("children" in block && Array.isArray(block.children)) {
-			collectRefs(block.children as Block[], allIds, links, actorRefs, scenarioRefs);
+			collectRefs(
+				block.children as Block[],
+				allIds,
+				actorIds,
+				policyIds,
+				links,
+				actorRefs,
+				scenarioRefs,
+			);
 		}
 	}
 }

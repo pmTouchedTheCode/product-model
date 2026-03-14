@@ -29,6 +29,13 @@ interface ScenarioReference {
 export function checkWorkspaceLinkIntegrity(workspace: PMWorkspace): ValidationDiagnostic[] {
 	const diagnostics: ValidationDiagnostic[] = [];
 
+	// Build typed ID sets by traversing all modules once up-front
+	const workspaceActorIds = new Set<string>();
+	const workspacePolicyIds = new Set<string>();
+	for (const mod of workspace.modules) {
+		collectTypedIds(mod.document.blocks, workspaceActorIds, workspacePolicyIds);
+	}
+
 	for (const module of workspace.modules) {
 		const links: LinkTarget[] = [];
 		const actorRefs: ActorReference[] = [];
@@ -59,7 +66,7 @@ export function checkWorkspaceLinkIntegrity(workspace: PMWorkspace): ValidationD
 		// ── Actor references ──────────────────────────────────────
 		for (const ref of actorRefs) {
 			for (const actorId of ref.actorIds) {
-				if (!(actorId in workspace.idIndex)) {
+				if (!workspaceActorIds.has(actorId)) {
 					diagnostics.push({
 						severity: "error",
 						message: `${ref.context} actor "${actorId}" does not reference an existing Actor block ID in workspace`,
@@ -72,15 +79,15 @@ export function checkWorkspaceLinkIntegrity(workspace: PMWorkspace): ValidationD
 
 		// ── Scenario policy / actor references ────────────────────
 		for (const ref of scenarioRefs) {
-			if (ref.policyId && !(ref.policyId in workspace.idIndex)) {
+			if (ref.policyId && !workspacePolicyIds.has(ref.policyId)) {
 				diagnostics.push({
 					severity: "error",
-					message: `Scenario "policy" target "${ref.policyId}" does not reference an existing block ID in workspace`,
+					message: `Scenario "policy" target "${ref.policyId}" does not reference an existing Policy block ID in workspace`,
 					blockId: ref.blockId,
 					path: module.filePath,
 				});
 			}
-			if (ref.actorId && !(ref.actorId in workspace.idIndex)) {
+			if (ref.actorId && !workspaceActorIds.has(ref.actorId)) {
 				diagnostics.push({
 					severity: "error",
 					message: `Scenario "actor" target "${ref.actorId}" does not reference an existing Actor block ID in workspace`,
@@ -92,6 +99,18 @@ export function checkWorkspaceLinkIntegrity(workspace: PMWorkspace): ValidationD
 	}
 
 	return diagnostics;
+}
+
+function collectTypedIds(blocks: Block[], actorIds: Set<string>, policyIds: Set<string>): void {
+	for (const block of blocks) {
+		if ("id" in block && typeof block.id === "string") {
+			if (block.type === "Actor") actorIds.add(block.id);
+			if (block.type === "Policy") policyIds.add(block.id);
+		}
+		if ("children" in block && Array.isArray(block.children)) {
+			collectTypedIds(block.children as Block[], actorIds, policyIds);
+		}
+	}
 }
 
 function collectRefs(

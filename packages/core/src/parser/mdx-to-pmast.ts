@@ -111,12 +111,14 @@ function transformBlock(extracted: ExtractedBlock): Record<string, unknown> {
 	}
 
 	// ── Policy / Constraint: parse space-separated actor list → string[] ──
+	// Only transform when actor is a string; leave non-string values intact so
+	// Zod can surface a meaningful validation error rather than silently discarding them.
 	if (extracted.type === "Policy" || extracted.type === "Constraint") {
-		const actorList = parseActorList(block.actor);
-		if (actorList !== undefined) {
-			block.actor = actorList;
-		} else {
-			block.actor = undefined;
+		if (typeof block.actor === "string") {
+			const actorList = parseActorList(block.actor);
+			if (actorList !== undefined) {
+				block.actor = actorList;
+			}
 		}
 	}
 

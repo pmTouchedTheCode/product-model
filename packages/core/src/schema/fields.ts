@@ -26,9 +26,17 @@ export const FieldSpecSchema = z.object({
 });
 
 /**
- * Validate that enum fields have enumValues defined.
+ * Validate that enum fields have enumValues defined,
+ * and that min/max/pattern are only used on appropriate field types.
  */
 export const ValidatedFieldSpecSchema = FieldSpecSchema.refine(
 	(field) => field.type !== "enum" || (field.enumValues && field.enumValues.length > 0),
 	{ message: "Enum fields must have at least one enumValues entry" },
-);
+)
+	.refine(
+		(field) => (field.min === undefined && field.max === undefined) || field.type === "number",
+		{ message: "min/max constraints are only valid for number fields" },
+	)
+	.refine((field) => field.pattern === undefined || field.type === "string", {
+		message: "pattern constraint is only valid for string fields",
+	});
