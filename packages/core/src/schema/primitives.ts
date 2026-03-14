@@ -34,6 +34,9 @@ export const BlockTypeSchema = z.enum([
 	"Constraint",
 	"Link",
 	"Logic",
+	"Actor",
+	"Outcome",
+	"Scenario",
 ]);
 
 /**

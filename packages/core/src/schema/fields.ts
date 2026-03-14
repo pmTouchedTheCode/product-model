@@ -4,6 +4,11 @@ import { FieldTypeSchema } from "./primitives.js";
 /**
  * Schema for a field specification within a Definition block.
  * Defines the name, type, requiredness, and optional constraints of a data field.
+ *
+ * Fields can be authored either as native MDX child elements:
+ *   <Field name="quantity" type="number" required min={1} max={99} />
+ *
+ * or as a legacy JSON-encoded `fields` attribute on the Definition block (deprecated).
  */
 export const FieldSpecSchema = z.object({
 	name: z.string().min(1, "Field name is required"),
@@ -12,6 +17,12 @@ export const FieldSpecSchema = z.object({
 	description: z.string().optional(),
 	enumValues: z.array(z.string()).optional(),
 	default: z.union([z.string(), z.number(), z.boolean()]).optional(),
+	/** Minimum value — valid for `number` fields */
+	min: z.number().optional(),
+	/** Maximum value — valid for `number` fields */
+	max: z.number().optional(),
+	/** Regex pattern constraint — valid for `string` fields */
+	pattern: z.string().optional(),
 });
 
 /**

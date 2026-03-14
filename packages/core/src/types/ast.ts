@@ -1,13 +1,16 @@
 import type { z } from "zod";
 import type {
+	ActorBlockSchema,
 	BlockSchema,
 	ConstraintBlockSchema,
 	DefinitionBlockSchema,
 	FeatureBlockSchema,
 	LinkBlockSchema,
 	LogicBlockSchema,
+	OutcomeBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
+	ScenarioBlockSchema,
 } from "../schema/blocks.js";
 import type { FieldSpecSchema } from "../schema/fields.js";
 import type {
@@ -37,6 +40,9 @@ export type PolicyBlock = z.infer<typeof PolicyBlockSchema>;
 export type ConstraintBlock = z.infer<typeof ConstraintBlockSchema>;
 export type LinkBlock = z.infer<typeof LinkBlockSchema>;
 export type LogicBlock = z.infer<typeof LogicBlockSchema>;
+export type ActorBlock = z.infer<typeof ActorBlockSchema>;
+export type OutcomeBlock = z.infer<typeof OutcomeBlockSchema>;
+export type ScenarioBlock = z.infer<typeof ScenarioBlockSchema>;
 export type { SectionBlock } from "../schema/blocks.js";
 export type FeatureBlock = z.infer<typeof FeatureBlockSchema>;
 

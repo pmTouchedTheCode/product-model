@@ -77,6 +77,100 @@ describe("grammar-rules", () => {
 		expect(diagnostics).toHaveLength(1);
 		expect(diagnostics[0]?.message).toContain("not allowed at document root");
 	});
+
+	it("allows Actor, Outcome, Scenario as Feature children", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "Feature 1",
+					children: [
+						{ type: "Actor", id: "guest", name: "Guest" },
+						{
+							type: "Outcome",
+							id: "cvr",
+							name: "CVR",
+							metric: "conversion_rate",
+							target: "75%",
+							timeframe: "30d",
+						},
+						{
+							type: "Scenario",
+							id: "sc-1",
+							name: "Scenario",
+							given: "G",
+							when: "W",
+							then: "T",
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkGrammarRules(doc);
+		expect(diagnostics).toHaveLength(0);
+	});
+
+	it("allows Actor and Scenario as Section children", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "Feature 1",
+					children: [
+						{
+							type: "Section",
+							id: "sec-1",
+							name: "Section 1",
+							children: [
+								{ type: "Actor", id: "guest", name: "Guest" },
+								{
+									type: "Scenario",
+									id: "sc-1",
+									name: "Scenario",
+									given: "G",
+									when: "W",
+									then: "T",
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkGrammarRules(doc);
+		expect(diagnostics).toHaveLength(0);
+	});
+
+	it("rejects Outcome as a Section child", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "Feature 1",
+					children: [
+						{
+							type: "Section",
+							id: "sec-1",
+							name: "Section 1",
+							children: [
+								{
+									type: "Outcome" as "Actor",
+									id: "cvr",
+									name: "CVR",
+								} as PMDocument["blocks"][number],
+							],
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkGrammarRules(doc);
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toContain('"Outcome" is not allowed as a child of "Section"');
+	});
 });
 
 describe("id-uniqueness", () => {
@@ -168,6 +262,136 @@ describe("link-integrity", () => {
 							from: "f1",
 							to: "d1",
 							relationship: "depends-on",
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkLinkIntegrity(doc);
+		expect(diagnostics).toHaveLength(0);
+	});
+
+	it("validates new relationship types in links", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "F",
+					children: [
+						{ type: "Actor", id: "a1", name: "Actor 1" },
+						{
+							type: "Link",
+							from: "f1",
+							to: "a1",
+							relationship: "enables",
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkLinkIntegrity(doc);
+		expect(diagnostics).toHaveLength(0);
+	});
+
+	it("detects broken Policy actor references", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "F",
+					children: [
+						{
+							type: "Policy",
+							id: "p1",
+							name: "Policy",
+							rule: "Some rule",
+							actor: ["nonexistent-actor"],
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkLinkIntegrity(doc);
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toContain("nonexistent-actor");
+	});
+
+	it("passes when Policy actor references a valid Actor block", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "F",
+					children: [
+						{ type: "Actor", id: "guest", name: "Guest" },
+						{
+							type: "Policy",
+							id: "p1",
+							name: "Policy",
+							rule: "Some rule",
+							actor: ["guest"],
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkLinkIntegrity(doc);
+		expect(diagnostics).toHaveLength(0);
+	});
+
+	it("detects broken Scenario policy reference", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "F",
+					children: [
+						{
+							type: "Scenario",
+							id: "sc-1",
+							name: "Scenario",
+							given: "G",
+							when: "W",
+							then: "T",
+							policy: "nonexistent-policy",
+						},
+					],
+				},
+			],
+		});
+		const diagnostics = checkLinkIntegrity(doc);
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toContain("nonexistent-policy");
+	});
+
+	it("passes when Scenario references valid policy and actor", () => {
+		const doc = makeDoc({
+			blocks: [
+				{
+					type: "Feature",
+					id: "f1",
+					name: "F",
+					children: [
+						{ type: "Actor", id: "guest", name: "Guest" },
+						{
+							type: "Policy",
+							id: "p1",
+							name: "Policy",
+							rule: "Some rule",
+						},
+						{
+							type: "Scenario",
+							id: "sc-1",
+							name: "Scenario",
+							given: "G",
+							when: "W",
+							then: "T",
+							policy: "p1",
+							actor: "guest",
 						},
 					],
 				},

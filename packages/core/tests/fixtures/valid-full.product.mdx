@@ -1,35 +1,62 @@
 <Feature id="checkout" name="Checkout Flow">
   End-to-end purchase flow from cart through payment confirmation.
 
+  <Actor id="guest-user" name="Guest User"
+    description="Unauthenticated visitor browsing or in early checkout"
+  />
+  <Actor id="member-user" name="Authenticated Member"
+    description="User with a verified account and payment method on file"
+  />
+
+  <Outcome id="checkout-cvr" name="Checkout Conversion Rate"
+    metric="conversion_rate"
+    baseline="68%"
+    target="75%"
+    timeframe="30d"
+    owner="checkout-pm"
+  />
+
   <Section id="cart-section" name="Shopping Cart">
     Manages cart state before a user begins payment.
-    <Definition id="cart-item" name="Cart Item" version="1.0.0"
-      fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"price","type":"number","required":true}]'
-    >
+    <Definition id="cart-item" name="Cart Item" version="1.0.0">
       Canonical line-item contract for checkout calculations.
+      <Field name="productId" type="string" required />
+      <Field name="quantity" type="number" required min={1} max={99} />
+      <Field name="price" type="number" required />
+      <Field name="currency" type="enum" values="USD,EUR,GBP,KRW" required />
     </Definition>
     <Policy id="max-quantity" name="Max Quantity Policy"
+      trigger="cart.item.add"
+      actor="guest-user member-user"
       rule="A single cart item cannot exceed 99 units"
       enforcement="must"
     >
       Prevent oversized orders that violate fulfillment constraints.
       <Logic id="max-qty-guard" name="Quantity Guard">
-        If requested quantity > 99, reject update and return validation error.
+        If requested quantity exceeds 99, reject the update and return a validation error.
       </Logic>
     </Policy>
     <Constraint id="positive-price" name="Positive Price"
       condition="price must be greater than 0"
+      actor="guest-user member-user"
     >
       Every cart item price must remain positive.
     </Constraint>
+    <Scenario id="sc-cart-limit" name="Cart at capacity"
+      given="A cart containing exactly 99 items"
+      when="The user attempts to set quantity to 100 on a cart item"
+      then="The system rejects the update and returns QUANTITY_EXCEEDED"
+      policy="max-quantity"
+      actor="guest-user"
+    />
   </Section>
 
   <Section id="payment-section" name="Payment">
     Payment capture and tokenized authorization workflows.
-    <Definition id="payment-method" name="Payment Method" version="1.0.0"
-      fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","paypal","apple_pay"]},{"name":"token","type":"string","required":true}]'
-    >
+    <Definition id="payment-method" name="Payment Method" version="1.0.0">
       Supported payment instruments and token payload.
+      <Field name="type" type="enum" values="credit_card,paypal,apple_pay" required />
+      <Field name="token" type="string" required />
     </Definition>
   </Section>
 
