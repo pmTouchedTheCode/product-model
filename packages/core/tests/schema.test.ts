@@ -266,6 +266,7 @@ describe("block schemas", () => {
 				name: "Cart at capacity",
 				given: "A cart with 99 items",
 				when: "User adds a 100th item",
+				// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 				then: "System returns CART_LIMIT_EXCEEDED",
 				policy: "max-quantity",
 				actor: "guest-user",
@@ -326,6 +327,7 @@ describe("block schemas", () => {
 						name: "Scenario 1",
 						given: "State A",
 						when: "Action B",
+						// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 						then: "Result C",
 					},
 				],

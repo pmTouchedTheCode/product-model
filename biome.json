@@ -21,6 +21,6 @@
 		}
 	},
 	"files": {
-		"ignore": ["node_modules", "dist", ".turbo", "coverage"]
+		"ignore": ["node_modules", "dist", ".turbo", "coverage", "**/.next/**"]
 	}
 }

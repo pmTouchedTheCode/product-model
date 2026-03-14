@@ -20,8 +20,17 @@ describe("parser — Definition fields", () => {
 		if (definition?.type !== "Definition") return;
 
 		expect(definition.fields).toHaveLength(3);
-		expect(definition.fields[0]).toMatchObject({ name: "productId", type: "string", required: true });
-		expect(definition.fields[1]).toMatchObject({ name: "quantity", type: "number", min: 1, max: 99 });
+		expect(definition.fields[0]).toMatchObject({
+			name: "productId",
+			type: "string",
+			required: true,
+		});
+		expect(definition.fields[1]).toMatchObject({
+			name: "quantity",
+			type: "number",
+			min: 1,
+			max: 99,
+		});
 		expect(definition.fields[2]).toMatchObject({
 			name: "currency",
 			type: "enum",

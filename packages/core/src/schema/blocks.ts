@@ -140,6 +140,7 @@ export const ScenarioBlockSchema = z.object({
 	/** The triggering action (e.g. "The user attempts to add a 51st item") */
 	when: z.string().min(1),
 	/** The expected outcome (e.g. "System returns CART_LIMIT_EXCEEDED") */
+	// biome-ignore lint/suspicious/noThenProperty: `then` is a domain field in Scenario (Given/When/Then BDD pattern)
 	then: z.string().min(1),
 	/** Optional reference to the Policy block this scenario validates */
 	policy: BlockIdSchema.optional(),

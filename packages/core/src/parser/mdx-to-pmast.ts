@@ -32,7 +32,7 @@ function transformFieldAttrs(raw: Record<string, unknown>): Record<string, unkno
 			.split(",")
 			.map((v) => v.trim())
 			.filter(Boolean);
-		delete field.values;
+		field.values = undefined;
 	}
 
 	// Coerce numeric constraints
@@ -80,7 +80,7 @@ function transformBlock(extracted: ExtractedBlock): Record<string, unknown> {
 		if (Array.isArray(fieldChildren) && fieldChildren.length > 0) {
 			// Native <Field /> children take priority
 			block.fields = fieldChildren.map(transformFieldAttrs);
-			delete block.fieldChildren;
+			block.fieldChildren = undefined;
 		} else {
 			// Legacy JSON-encoded fields attribute (deprecated but still supported)
 			if (typeof block.fields === "string") {
@@ -107,7 +107,7 @@ function transformBlock(extracted: ExtractedBlock): Record<string, unknown> {
 		}
 
 		// Always clean up leftover fieldChildren key
-		delete block.fieldChildren;
+		block.fieldChildren = undefined;
 	}
 
 	// ── Policy / Constraint: parse space-separated actor list → string[] ──
@@ -116,7 +116,7 @@ function transformBlock(extracted: ExtractedBlock): Record<string, unknown> {
 		if (actorList !== undefined) {
 			block.actor = actorList;
 		} else {
-			delete block.actor;
+			block.actor = undefined;
 		}
 	}
 

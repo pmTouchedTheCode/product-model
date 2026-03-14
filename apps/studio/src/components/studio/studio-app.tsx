@@ -194,6 +194,9 @@ function StudioEditorBlock({
 				<div
 					className="flex cursor-pointer items-center gap-2 px-3 py-2"
 					onClick={() => onFocus(focused ? "" : block.uiId)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") onFocus(focused ? "" : block.uiId);
+					}}
 				>
 					<button
 						{...attributes}
@@ -1056,7 +1059,12 @@ export function StudioApp(): React.JSX.Element {
 					{/* Split content */}
 					<div className="flex min-h-0 min-w-0 flex-1">
 						{/* Block editor */}
-						<div className={cn("flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", sourceOpen && "border-r")}>
+						<div
+							className={cn(
+								"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+								sourceOpen && "border-r",
+							)}
+						>
 							<div className="flex items-center gap-2 border-b px-4 py-1.5">
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>

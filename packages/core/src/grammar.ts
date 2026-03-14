@@ -10,7 +10,17 @@ import type { GrammarTable } from "./types/grammar.js";
  * - Actor, Definition, Constraint, Link, Logic, Outcome, Scenario: leaf blocks with no children.
  */
 export const GRAMMAR_TABLE: GrammarTable = {
-	Feature: ["Section", "Definition", "Policy", "Constraint", "Link", "Logic", "Actor", "Outcome", "Scenario"],
+	Feature: [
+		"Section",
+		"Definition",
+		"Policy",
+		"Constraint",
+		"Link",
+		"Logic",
+		"Actor",
+		"Outcome",
+		"Scenario",
+	],
 	Section: ["Section", "Definition", "Policy", "Constraint", "Link", "Actor", "Scenario"],
 	Definition: [],
 	Policy: ["Logic"],

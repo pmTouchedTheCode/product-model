@@ -101,6 +101,7 @@ describe("grammar-rules", () => {
 							name: "Scenario",
 							given: "G",
 							when: "W",
+							// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 							then: "T",
 						},
 					],
@@ -131,6 +132,7 @@ describe("grammar-rules", () => {
 									name: "Scenario",
 									given: "G",
 									when: "W",
+									// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 									then: "T",
 								},
 							],
@@ -356,6 +358,7 @@ describe("link-integrity", () => {
 							name: "Scenario",
 							given: "G",
 							when: "W",
+							// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 							then: "T",
 							policy: "nonexistent-policy",
 						},
@@ -389,6 +392,7 @@ describe("link-integrity", () => {
 							name: "Scenario",
 							given: "G",
 							when: "W",
+							// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
 							then: "T",
 							policy: "p1",
 							actor: "guest",
