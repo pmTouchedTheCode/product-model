@@ -5,14 +5,50 @@
 <Feature id="checkout" name="Checkout Flow">
   Comprehensive checkout flow from cart preparation to order confirmation.
 
+
+  <Actor id="guest-shopper" name="Guest Shopper"
+    description="Unauthenticated visitor. No saved payment methods or address book."
+  />
+  <Actor id="member-shopper" name="Member Shopper"
+    description="Authenticated user with a verified account, saved addresses, and payment methods on file."
+  />
+  <Actor id="fraud-system" name="Fraud System"
+    description="Internal automated system that performs risk scoring and velocity checks."
+  />
+
+
+  <Outcome id="checkout-conversion" name="Checkout Conversion Rate"
+    metric="checkout_conversion_rate"
+    baseline="68%"
+    target="75%"
+    timeframe="30d"
+    owner="checkout-pm"
+    description="Percentage of users who reach cart and complete a paid order."
+  />
+  <Outcome id="payment-decline-rate" name="Payment Decline Rate"
+    metric="payment_decline_rate"
+    baseline="7%"
+    target="4%"
+    timeframe="30d"
+    owner="payments-pm"
+    description="Percentage of payment attempts that are declined, including soft declines."
+  />
+
+
   <Section id="cart" name="Shopping Cart">
     Captures line items and shopping constraints.
-    <Definition id="cart-item" name="Cart Item" version="1.0.0"
-      fields='[{"name":"productId","type":"string","required":true},{"name":"quantity","type":"number","required":true},{"name":"unitPrice","type":"number","required":true},{"name":"currency","type":"enum","required":true,"enumValues":["USD","EUR","GBP","KRW"]}]'
-    >
+
+    <Definition id="cart-item" name="Cart Item" version="1.0.0">
       Canonical structure for one line item in checkout.
+      <Field name="productId" type="string" required />
+      <Field name="quantity" type="number" required min={1} max={99} />
+      <Field name="unitPrice" type="number" required />
+      <Field name="currency" type="enum" values="USD,EUR,GBP,KRW" required />
     </Definition>
+
     <Policy id="max-cart-items" name="Maximum Cart Items"
+      trigger="cart.item.add"
+      actor="guest-shopper member-shopper"
       rule="A cart may contain at most 50 distinct line items"
       enforcement="must"
     >
@@ -21,7 +57,10 @@
         On add-item request, count distinct items; reject with error code CART_LIMIT_EXCEEDED when count exceeds 50.
       </Logic>
     </Policy>
+
     <Policy id="positive-quantity" name="Positive Quantity"
+      trigger="cart.item.update"
+      actor="guest-shopper member-shopper"
       rule="Quantity must be at least 1 and at most 99 per line item"
       enforcement="must"
     >
@@ -30,7 +69,10 @@
         Accept quantity only when it is between 1 and 99 inclusive. Return INVALID_QUANTITY if out of range; clamp silently only when triggered by inventory sync.
       </Logic>
     </Policy>
+
     <Policy id="inventory-hold" name="Inventory Hold on Cart Add"
+      trigger="cart.item.add"
+      actor="guest-shopper member-shopper"
       rule="Adding an item to cart must create a soft inventory hold that expires after 15 minutes of inactivity"
       enforcement="should"
     >
@@ -45,16 +87,10 @@
         On TTL expiry, release the hold and mark the cart item as unconfirmed. On next cart view, re-check availability and notify the user if stock is no longer available.
       </Logic>
     </Policy>
-    <Policy id="cart-expiration" name="Cart Expiration"
-      rule="Carts with no user activity for 7 days should be marked expired and items released"
-      enforcement="should"
-    >
-      Prevents stale cart data from accumulating and ensures inventory holds do not persist indefinitely through background processes.
-      <Logic id="cart-expiration-logic" name="Cart Cleanup Logic">
-        A daily batch job scans for carts with lastActivityAt older than 7 days. Expired carts are soft-deleted and a cart_expired event is emitted for analytics. If the user returns, show a "your cart has expired" message with option to restore items if still in stock.
-      </Logic>
-    </Policy>
+
     <Policy id="promo-code-validation" name="Promo Code Validation"
+      trigger="cart.promo.apply"
+      actor="guest-shopper member-shopper"
       rule="Only one promo code may be applied per cart; the code must be valid, unexpired, and satisfy minimum order requirements"
       enforcement="must"
     >
@@ -63,19 +99,46 @@
         On code submission, validate against promo service: check code exists, is within valid date range, and cart subtotal meets minimumOrderValue. Apply discount as either percentage or fixed amount based on promo type. Return INVALID_PROMO_CODE, PROMO_EXPIRED, or MINIMUM_NOT_MET as appropriate.
       </Logic>
       <Logic id="promo-code-recalculate" name="Promo Code Recalculation Logic">
-        When cart contents change after promo application, re-evaluate eligibility. If cart no longer meets minimum, remove promo and notify user. If item removal causes promo to become more favorable (e.g., category-specific discount now applies to higher percentage of cart), recalculate automatically.
+        When cart contents change after promo application, re-evaluate eligibility. If cart no longer meets minimum, remove promo and notify user.
       </Logic>
     </Policy>
+
+    <Constraint id="cart-currency-consistency" name="Cart Currency Consistency"
+      condition="All line items in a cart must share the same currency"
+      actor="guest-shopper member-shopper"
+    >
+      Prevents mixed-currency carts that break tax and payment calculations.
+    </Constraint>
+
+    <Scenario id="sc-cart-at-limit" name="Cart at 50-item capacity"
+      given="A cart containing exactly 50 distinct line items"
+      when="The user attempts to add a 51st distinct item"
+      then="The system rejects the request and returns error code CART_LIMIT_EXCEEDED without modifying the cart"
+      policy="max-cart-items"
+      actor="guest-shopper"
+    />
+    <Scenario id="sc-quantity-out-of-range" name="Quantity exceeds maximum"
+      given="A cart with one item at quantity 99"
+      when="The user attempts to set the quantity to 100"
+      then="The system rejects the update and returns INVALID_QUANTITY"
+      policy="positive-quantity"
+      actor="member-shopper"
+    />
   </Section>
+
 
   <Section id="payment" name="Payment Processing">
     Manages payment method capture and gateway constraints.
-    <Definition id="payment-method" name="Payment Method" version="1.0.0"
-      fields='[{"name":"type","type":"enum","required":true,"enumValues":["credit_card","debit_card","paypal","apple_pay","google_pay"]},{"name":"token","type":"string","required":true},{"name":"last4","type":"string","required":false}]'
-    >
+
+    <Definition id="payment-method" name="Payment Method" version="1.0.0">
       Normalized payment representation for authorization and capture.
+      <Field name="type" type="enum" values="credit_card,debit_card,paypal,apple_pay,google_pay" required />
+      <Field name="token" type="string" required />
+      <Field name="last4" type="string" required={false} pattern="^\d{4}$" />
     </Definition>
+
     <Policy id="pci-compliance" name="PCI Compliance"
+      trigger="payment.token.store"
       rule="Raw card numbers must never be stored; only tokenized references are permitted"
       enforcement="must"
     >
@@ -84,7 +147,10 @@
         Drop PAN fields and persist only provider-issued tokens. Log a security event if raw card data is detected in any request payload.
       </Logic>
     </Policy>
+
     <Policy id="payment-retry" name="Payment Retry Policy"
+      trigger="payment.authorize.fail"
+      actor="guest-shopper member-shopper"
       rule="Failed payment attempts should be retried up to 2 times with progressive gateway fallback before surfacing an error to the user"
       enforcement="should"
     >
@@ -93,138 +159,184 @@
         On soft decline (network timeout, 5xx from gateway), wait 2 seconds and retry on the same gateway. If the second attempt also fails with a soft decline, proceed to fallback.
       </Logic>
       <Logic id="payment-retry-fallback" name="Gateway Fallback Logic">
-        If primary gateway fails twice, route the third attempt through the secondary gateway. If all three attempts fail, present a user-friendly error with the option to try a different payment method. Never retry on hard declines (insufficient funds, stolen card, do-not-honor).
+        If primary gateway fails twice, route the third attempt through the secondary gateway. If all three attempts fail, present a user-friendly error. Never retry on hard declines.
       </Logic>
     </Policy>
+
     <Policy id="payment-idempotency" name="Payment Idempotency"
+      trigger="payment.authorize"
       rule="Each payment attempt must carry a unique idempotency key to prevent duplicate charges"
       enforcement="must"
     >
-      Prevents double-charging caused by network retries, user double-clicks, or frontend re-submissions.
+      Prevents double-charging caused by network retries or frontend re-submissions.
       <Logic id="payment-idempotency-logic" name="Idempotency Key Logic">
-        Generate a UUID-based idempotency key on checkout initiation. Attach the key to every authorization request. The gateway must reject duplicate keys within a 24-hour window. On frontend, disable the pay button immediately after first click and re-enable only on confirmed failure.
+        Generate a UUID-based idempotency key on checkout initiation. Attach the key to every authorization request. The gateway must reject duplicate keys within a 24-hour window.
       </Logic>
     </Policy>
+
     <Policy id="fraud-screening" name="Fraud Screening"
+      trigger="payment.authorize"
+      actor="fraud-system"
       rule="All transactions above $500 or flagged by risk scoring must undergo additional verification before capture"
       enforcement="must"
     >
       Reduces chargeback rate and protects against fraudulent high-value orders.
       <Logic id="fraud-risk-scoring" name="Risk Score Evaluation">
-        Before authorization, pass order details (amount, shipping address, device fingerprint, email age) to fraud scoring service. Orders with risk score above 80 are auto-declined. Scores between 60-80 trigger step-up verification (3DS or email OTP).
+        Before authorization, pass order details to fraud scoring service. Orders with risk score above 80 are auto-declined. Scores between 60-80 trigger step-up verification (3DS or email OTP).
       </Logic>
       <Logic id="fraud-velocity-check" name="Velocity Check Logic">
-        Flag accounts that attempt more than 3 failed payments in 10 minutes or more than 5 orders in 24 hours. Temporarily lock checkout for the account and require customer support intervention or a 30-minute cooldown.
+        Flag accounts that attempt more than 3 failed payments in 10 minutes or more than 5 orders in 24 hours. Temporarily lock checkout for the account.
       </Logic>
     </Policy>
+
     <Constraint id="payment-timeout" name="Payment Timeout"
       condition="Payment gateway response must arrive within 30 seconds"
+      actor="guest-shopper member-shopper"
     >
       Protect user flow from long-running authorization calls.
     </Constraint>
+
     <Constraint id="currency-consistency" name="Currency Consistency"
       condition="The currency used in payment authorization must match the currency displayed to the user at cart time"
     >
       Prevents exchange rate discrepancies between displayed price and charged amount.
     </Constraint>
+
+    <Scenario id="sc-payment-soft-decline" name="Soft decline triggers retry"
+      given="A valid cart and payment method are submitted for authorization"
+      when="The primary payment gateway returns a 503 timeout"
+      then="The system waits 2 seconds and retries on the same gateway before falling back"
+      policy="payment-retry"
+      actor="member-shopper"
+    />
+    <Scenario id="sc-fraud-high-risk" name="High-risk transaction blocked"
+      given="An order totalling $800 from a new account with a high-entropy device fingerprint"
+      when="The fraud scoring service returns a risk score of 85"
+      then="The order is auto-declined with reason FRAUD_RISK_TOO_HIGH and no charge is made"
+      policy="fraud-screening"
+      actor="fraud-system"
+    />
   </Section>
+
 
   <Section id="shipping" name="Shipping">
     Shipping destination and fulfillment option data.
-    <Definition id="shipping-address" name="Shipping Address" version="1.0.0"
-      fields='[{"name":"street","type":"string","required":true},{"name":"city","type":"string","required":true},{"name":"state","type":"string","required":false},{"name":"postalCode","type":"string","required":true},{"name":"country","type":"string","required":true}]'
-    >
+
+    <Definition id="shipping-address" name="Shipping Address" version="1.0.0">
       Address schema for delivery and tax calculation.
+      <Field name="street" type="string" required />
+      <Field name="city" type="string" required />
+      <Field name="state" type="string" required={false} />
+      <Field name="postalCode" type="string" required />
+      <Field name="country" type="string" required />
     </Definition>
-    <Definition id="shipping-option" name="Shipping Option" version="1.0.0"
-      fields='[{"name":"carrier","type":"string","required":true},{"name":"speed","type":"enum","required":true,"enumValues":["standard","express","overnight"]},{"name":"price","type":"number","required":true},{"name":"estimatedDays","type":"number","required":true}]'
-    >
+
+    <Definition id="shipping-option" name="Shipping Option" version="1.0.0">
       Available shipping methods offered at checkout.
+      <Field name="carrier" type="string" required />
+      <Field name="speed" type="enum" values="standard,express,overnight" required />
+      <Field name="price" type="number" required min={0} />
+      <Field name="estimatedDays" type="number" required min={1} />
     </Definition>
+
     <Policy id="address-validation" name="Address Validation"
+      trigger="shipping.address.submit"
+      actor="guest-shopper member-shopper"
       rule="Shipping addresses must be validated against a postal service API before order placement"
       enforcement="must"
     >
       Reduces failed deliveries and return costs from invalid or incomplete addresses.
       <Logic id="address-validation-logic" name="Address Verification Logic">
-        On address submission, call postal validation API. If the address is undeliverable, show an error. If the API suggests corrections (e.g., missing apartment number, ZIP+4 completion), present suggestions to the user and require explicit confirmation. Bypass validation only for military (APO/FPO) and PO Box addresses where API coverage is limited.
+        On address submission, call postal validation API. If undeliverable, show an error. If the API suggests corrections, present suggestions and require explicit user confirmation.
       </Logic>
     </Policy>
+
     <Policy id="restricted-regions" name="Restricted Region Handling"
-      rule="Orders shipping to sanctioned countries or regions with import restrictions must be blocked at checkout with a clear explanation"
+      trigger="shipping.address.submit"
+      actor="guest-shopper member-shopper"
+      rule="Orders shipping to sanctioned countries or regions with import restrictions must be blocked at checkout"
       enforcement="must"
     >
       Ensures trade compliance and prevents orders that cannot be legally fulfilled.
       <Logic id="restricted-regions-logic" name="Region Restriction Logic">
-        Maintain a configurable blocklist of country and region codes. On shipping address entry, check against the blocklist. If restricted, display a message explaining the restriction without disclosing specific compliance details. Log blocked attempts for compliance audit.
+        Maintain a configurable blocklist of country and region codes. On address entry, check against the blocklist. If restricted, display a message without disclosing specific compliance details. Log blocked attempts for compliance audit.
       </Logic>
     </Policy>
-    <Policy id="shipping-tax-calculation" name="Tax Calculation"
-      rule="Sales tax and VAT must be calculated based on the shipping destination before order confirmation"
-      enforcement="must"
-    >
-      Ensures the total displayed at checkout includes all applicable taxes per jurisdiction.
-      <Logic id="tax-calculation-logic" name="Tax Calculation Logic">
-        On shipping address confirmation, call tax service with line items and destination. Apply tax rates per item category (some categories may be tax-exempt). Display tax as a separate line item in the order summary. Recalculate if shipping address or cart contents change.
-      </Logic>
-    </Policy>
+
+    <Scenario id="sc-invalid-address" name="Undeliverable address rejected"
+      given="A guest shopper has entered a non-existent postal code"
+      when="The user clicks 'Continue to Payment'"
+      then="The system calls the postal API, receives UNDELIVERABLE, and displays an address correction prompt"
+      policy="address-validation"
+      actor="guest-shopper"
+    />
   </Section>
+
 
   <Section id="order-confirmation" name="Order Confirmation">
     Final order record and confirmation policies.
-    <Definition id="order" name="Order" version="1.0.0"
-      fields='[{"name":"orderId","type":"string","required":true},{"name":"status","type":"enum","required":true,"enumValues":["pending","confirmed","shipped","delivered","cancelled"]},{"name":"total","type":"number","required":true},{"name":"createdAt","type":"datetime","required":true}]'
-    >
+
+    <Definition id="order" name="Order" version="1.0.0">
       Immutable order snapshot created after successful payment.
+      <Field name="orderId" type="string" required pattern="^ORD-[A-Z0-9]{8}$" />
+      <Field name="status" type="enum" values="pending,confirmed,shipped,delivered,cancelled" required />
+      <Field name="total" type="number" required min={0} />
+      <Field name="createdAt" type="datetime" required />
     </Definition>
+
     <Policy id="confirmation-email" name="Order Confirmation Email"
+      trigger="order.created"
       rule="A confirmation email must be sent within 60 seconds of order placement"
       enforcement="must"
     >
       Ensure users get immediate post-purchase confirmation.
       <Logic id="confirmation-email-logic" name="Confirmation Delivery Logic">
-        Enqueue confirmation event at order creation. Email service must deliver within 60 seconds. If delivery fails, retry up to 3 times with exponential backoff (5s, 15s, 45s). After 3 failures, alert the operations team and queue for manual follow-up.
+        Enqueue confirmation event at order creation. Email service must deliver within 60 seconds. If delivery fails, retry up to 3 times with exponential backoff (5s, 15s, 45s).
       </Logic>
     </Policy>
+
     <Policy id="cancellation-window" name="Order Cancellation Window"
+      trigger="order.cancel.request"
+      actor="member-shopper"
       rule="Users may cancel an order within 30 minutes of placement if the order has not entered fulfillment"
       enforcement="must"
     >
-      Provides a grace period for accidental or impulsive purchases while respecting fulfillment workflow constraints.
+      Provides a grace period for accidental purchases while respecting fulfillment workflow constraints.
       <Logic id="cancellation-eligibility" name="Cancellation Eligibility Logic">
-        On cancel request, check that createdAt is within 30 minutes of current time AND order status is still pending or confirmed (not shipped). If eligible, transition status to cancelled, initiate payment refund, and release inventory holds.
+        On cancel request, check that createdAt is within 30 minutes of current time AND order status is still pending or confirmed. If eligible, transition status to cancelled, initiate refund, and release inventory holds.
       </Logic>
       <Logic id="cancellation-refund" name="Cancellation Refund Logic">
-        Initiate a full refund through the original payment method. If refund fails (e.g., payment provider error), create a store credit for the full amount and notify the user. Refund processing should complete within 5-10 business days depending on payment provider.
+        Initiate a full refund through the original payment method. If refund fails, create a store credit for the full amount and notify the user.
       </Logic>
     </Policy>
-    <Policy id="order-failure-recovery" name="Order Failure Recovery"
-      rule="If order creation fails after payment succeeds, the system must automatically initiate a refund and notify the user"
-      enforcement="must"
-    >
-      Prevents the worst-case scenario where a user is charged but no order is recorded.
-      <Logic id="order-failure-detection" name="Failure Detection Logic">
-        After successful payment capture, if the order persistence step fails (database error, timeout), immediately log a critical alert with the payment transaction ID.
-      </Logic>
-      <Logic id="order-failure-refund" name="Automatic Refund Logic">
-        Trigger an automatic void (if within capture window) or refund on the payment. Send the user an email explaining the issue and confirming the refund. Include a support reference number for follow-up.
-      </Logic>
-    </Policy>
+
+    <Scenario id="sc-cancel-in-window" name="Order cancelled within grace period"
+      given="A confirmed order placed 20 minutes ago with status 'confirmed'"
+      when="The member clicks 'Cancel Order'"
+      then="The order transitions to 'cancelled', a full refund is initiated, and inventory holds are released"
+      policy="cancellation-window"
+      actor="member-shopper"
+    />
+    <Scenario id="sc-cancel-after-window" name="Cancel attempt after 30-minute window"
+      given="A confirmed order placed 45 minutes ago with status 'confirmed'"
+      when="The member attempts to cancel via the order detail page"
+      then="The system rejects the cancellation with CANCEL_WINDOW_EXPIRED and displays a customer support contact"
+      policy="cancellation-window"
+      actor="member-shopper"
+    />
   </Section>
 
+
   <Link id="cart-to-payment" from="cart" to="payment" relationship="depends-on"
-    description="Cart must be finalized before payment"
-  >
-    Checkout moves from cart validation to payment authorization.
-  </Link>
+    description="Cart must be finalized before payment can proceed"
+  />
   <Link id="payment-to-shipping" from="payment" to="shipping" relationship="depends-on"
     description="Payment must succeed before shipping is arranged"
-  >
-    Successful payment unlocks fulfillment choice and pricing.
-  </Link>
+  />
   <Link id="shipping-to-confirmation" from="shipping" to="order-confirmation" relationship="depends-on"
     description="Shipping selection completes the order"
-  >
-    After shipping selection, the order is finalized and confirmed.
-  </Link>
+  />
+  <Link id="fraud-validates-payment" from="fraud-screening" to="payment-idempotency" relationship="validates"
+    description="Fraud screening must pass before any idempotency key is committed to a charge"
+  />
 </Feature>

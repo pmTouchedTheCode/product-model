@@ -1,8 +1,8 @@
-import { defineCommand } from "citty";
-import { spawn, exec } from "node:child_process";
-import { createServer } from "node:net";
+import { exec, spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
+import { defineCommand } from "citty";
 
 function isPortFree(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
@@ -17,11 +17,7 @@ function isPortFree(port: number): Promise<boolean> {
 
 function openBrowser(url: string): void {
 	const cmd =
-		process.platform === "darwin"
-			? "open"
-			: process.platform === "win32"
-				? "start"
-				: "xdg-open";
+		process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 	exec(`${cmd} ${url}`);
 }
 

@@ -68,7 +68,24 @@ function normalizeContent(raw: string): string | undefined {
 }
 
 /**
+ * Extract attributes from a raw MdxJsxFlowElement into a plain record.
+ */
+function extractRawAttributes(node: MdxJsxFlowElement): Record<string, unknown> {
+	const attrs: Record<string, unknown> = {};
+	for (const attr of node.attributes) {
+		if ("name" in attr && typeof attr.name === "string") {
+			attrs[attr.name] = extractAttributeValue(attr);
+		}
+	}
+	return attrs;
+}
+
+/**
  * Extract block data from an MDX JSX element and its children.
+ *
+ * Special handling for `<Field />` child elements inside `<Definition>`:
+ * they are collected into `attributes.fieldChildren` as raw attribute records,
+ * rather than being treated as child blocks.
  */
 function extractBlock(node: MdxJsxFlowElement): ExtractedBlock | null {
 	const tagName = node.name;
@@ -77,17 +94,25 @@ function extractBlock(node: MdxJsxFlowElement): ExtractedBlock | null {
 	const result = BlockTypeSchema.safeParse(tagName);
 	if (!result.success) return null;
 
-	const attributes: Record<string, unknown> = {};
-	for (const attr of node.attributes) {
-		if ("name" in attr && typeof attr.name === "string") {
-			attributes[attr.name] = extractAttributeValue(attr);
-		}
-	}
+	const attributes: Record<string, unknown> = extractRawAttributes(node);
 
 	const children: ExtractedBlock[] = [];
 	const contentFragments: string[] = [];
+
 	for (const child of node.children) {
 		if (isMdxJsxFlowElement(child)) {
+			// Collect native <Field /> children into fieldChildren, but only for Definition blocks.
+			// Allowing <Field /> under other block types would silently inject `fieldChildren` into
+			// strict schemas (e.g. Feature) causing Zod parse failures.
+			if (tagName === "Definition" && child.name === "Field") {
+				const fieldAttrs = extractRawAttributes(child);
+				if (!Array.isArray(attributes.fieldChildren)) {
+					attributes.fieldChildren = [];
+				}
+				(attributes.fieldChildren as Record<string, unknown>[]).push(fieldAttrs);
+				continue;
+			}
+
 			const extracted = extractBlock(child);
 			if (extracted) {
 				children.push(extracted);

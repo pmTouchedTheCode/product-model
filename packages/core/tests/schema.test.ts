@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	ActorBlockSchema,
 	BlockIdSchema,
 	ConstraintBlockSchema,
 	DefinitionBlockSchema,
@@ -7,8 +8,10 @@ import {
 	FieldTypeSchema,
 	LinkBlockSchema,
 	LogicBlockSchema,
+	OutcomeBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
+	ScenarioBlockSchema,
 	SemVerSchema,
 } from "../src/schema/index.js";
 
@@ -58,7 +61,7 @@ describe("primitives", () => {
 
 describe("block schemas", () => {
 	describe("DefinitionBlockSchema", () => {
-		it("accepts a valid definition", () => {
+		it("accepts a valid definition with flat fields", () => {
 			const def = DefinitionBlockSchema.parse({
 				type: "Definition",
 				id: "user",
@@ -68,6 +71,29 @@ describe("block schemas", () => {
 			});
 			expect(def.type).toBe("Definition");
 			expect(def.fields).toHaveLength(1);
+		});
+
+		it("accepts fields with min/max constraints", () => {
+			const def = DefinitionBlockSchema.parse({
+				type: "Definition",
+				id: "item",
+				name: "Item",
+				version: "1.0.0",
+				fields: [{ name: "quantity", type: "number", required: true, min: 1, max: 99 }],
+			});
+			expect(def.fields[0]?.min).toBe(1);
+			expect(def.fields[0]?.max).toBe(99);
+		});
+
+		it("accepts fields with pattern constraint", () => {
+			const def = DefinitionBlockSchema.parse({
+				type: "Definition",
+				id: "order",
+				name: "Order",
+				version: "1.0.0",
+				fields: [{ name: "orderId", type: "string", required: true, pattern: "^ORD-\\d+$" }],
+			});
+			expect(def.fields[0]?.pattern).toBe("^ORD-\\d+$");
 		});
 
 		it("rejects a definition without fields", () => {
@@ -84,7 +110,7 @@ describe("block schemas", () => {
 	});
 
 	describe("PolicyBlockSchema", () => {
-		it("accepts a valid policy", () => {
+		it("accepts a valid policy with default enforcement", () => {
 			const policy = PolicyBlockSchema.parse({
 				type: "Policy",
 				id: "max-qty",
@@ -101,6 +127,19 @@ describe("block schemas", () => {
 			});
 			expect(policy.enforcement).toBe("must");
 		});
+
+		it("accepts a policy with trigger and actor list", () => {
+			const policy = PolicyBlockSchema.parse({
+				type: "Policy",
+				id: "max-qty",
+				name: "Max Quantity",
+				rule: "Cannot exceed 99",
+				trigger: "cart.item.add",
+				actor: ["guest", "member"],
+			});
+			expect(policy.trigger).toBe("cart.item.add");
+			expect(policy.actor).toEqual(["guest", "member"]);
+		});
 	});
 
 	describe("ConstraintBlockSchema", () => {
@@ -113,17 +152,53 @@ describe("block schemas", () => {
 			});
 			expect(c.condition).toBe("value > 0");
 		});
+
+		it("accepts a constraint with actor list", () => {
+			const c = ConstraintBlockSchema.parse({
+				type: "Constraint",
+				id: "positive",
+				name: "Positive Value",
+				condition: "value > 0",
+				actor: ["guest"],
+			});
+			expect(c.actor).toEqual(["guest"]);
+		});
 	});
 
 	describe("LinkBlockSchema", () => {
-		it("accepts a valid link", () => {
-			const link = LinkBlockSchema.parse({
-				type: "Link",
-				from: "blockA",
-				to: "blockB",
-				relationship: "depends-on",
-			});
-			expect(link.relationship).toBe("depends-on");
+		it("accepts all original relationship types", () => {
+			for (const rel of ["depends-on", "extends", "conflicts-with", "implements"]) {
+				const link = LinkBlockSchema.parse({
+					type: "Link",
+					from: "blockA",
+					to: "blockB",
+					relationship: rel,
+				});
+				expect(link.relationship).toBe(rel);
+			}
+		});
+
+		it("accepts new relationship types", () => {
+			for (const rel of ["triggers", "supersedes", "validates", "enables", "blocks"]) {
+				const link = LinkBlockSchema.parse({
+					type: "Link",
+					from: "blockA",
+					to: "blockB",
+					relationship: rel,
+				});
+				expect(link.relationship).toBe(rel);
+			}
+		});
+
+		it("rejects an unknown relationship type", () => {
+			expect(() =>
+				LinkBlockSchema.parse({
+					type: "Link",
+					from: "blockA",
+					to: "blockB",
+					relationship: "replaces",
+				}),
+			).toThrow();
 		});
 	});
 
@@ -139,8 +214,81 @@ describe("block schemas", () => {
 		});
 	});
 
+	describe("ActorBlockSchema", () => {
+		it("accepts a valid actor", () => {
+			const actor = ActorBlockSchema.parse({
+				type: "Actor",
+				id: "guest-user",
+				name: "Guest User",
+				description: "Unauthenticated visitor",
+			});
+			expect(actor.type).toBe("Actor");
+			expect(actor.id).toBe("guest-user");
+		});
+
+		it("requires id and name", () => {
+			expect(() => ActorBlockSchema.parse({ type: "Actor" })).toThrow();
+		});
+	});
+
+	describe("OutcomeBlockSchema", () => {
+		it("accepts a valid outcome", () => {
+			const outcome = OutcomeBlockSchema.parse({
+				type: "Outcome",
+				id: "checkout-cvr",
+				name: "Checkout Conversion Rate",
+				metric: "conversion_rate",
+				target: "75%",
+				timeframe: "30d",
+				baseline: "68%",
+				owner: "checkout-pm",
+			});
+			expect(outcome.metric).toBe("conversion_rate");
+			expect(outcome.target).toBe("75%");
+		});
+
+		it("requires metric, target, timeframe", () => {
+			expect(() =>
+				OutcomeBlockSchema.parse({
+					type: "Outcome",
+					id: "cvr",
+					name: "CVR",
+				}),
+			).toThrow();
+		});
+	});
+
+	describe("ScenarioBlockSchema", () => {
+		it("accepts a valid scenario", () => {
+			const scenario = ScenarioBlockSchema.parse({
+				type: "Scenario",
+				id: "sc-cart-limit",
+				name: "Cart at capacity",
+				given: "A cart with 99 items",
+				when: "User adds a 100th item",
+				// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
+				then: "System returns CART_LIMIT_EXCEEDED",
+				policy: "max-quantity",
+				actor: "guest-user",
+			});
+			expect(scenario.given).toBe("A cart with 99 items");
+			expect(scenario.policy).toBe("max-quantity");
+			expect(scenario.actor).toBe("guest-user");
+		});
+
+		it("requires given, when, then", () => {
+			expect(() =>
+				ScenarioBlockSchema.parse({
+					type: "Scenario",
+					id: "sc-x",
+					name: "X",
+				}),
+			).toThrow();
+		});
+	});
+
 	describe("FeatureBlockSchema", () => {
-		it("accepts a feature with children", () => {
+		it("accepts a feature with Definition children", () => {
 			const feature = FeatureBlockSchema.parse({
 				type: "Feature",
 				id: "checkout",
@@ -158,7 +306,36 @@ describe("block schemas", () => {
 			expect(feature.children).toHaveLength(1);
 		});
 
-		it("rejects unsupported status/priority fields", () => {
+		it("accepts a feature with Actor, Outcome and Scenario children", () => {
+			const feature = FeatureBlockSchema.parse({
+				type: "Feature",
+				id: "checkout",
+				name: "Checkout",
+				children: [
+					{ type: "Actor", id: "guest", name: "Guest User" },
+					{
+						type: "Outcome",
+						id: "cvr",
+						name: "Conversion Rate",
+						metric: "conversion_rate",
+						target: "75%",
+						timeframe: "30d",
+					},
+					{
+						type: "Scenario",
+						id: "sc-1",
+						name: "Scenario 1",
+						given: "State A",
+						when: "Action B",
+						// biome-ignore lint/suspicious/noThenProperty: domain field (BDD Given/When/Then)
+						then: "Result C",
+					},
+				],
+			});
+			expect(feature.children).toHaveLength(3);
+		});
+
+		it("rejects unsupported top-level attributes on Feature", () => {
 			expect(() =>
 				FeatureBlockSchema.parse({
 					type: "Feature",

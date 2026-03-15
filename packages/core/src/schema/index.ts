@@ -9,14 +9,17 @@ export {
 export { FieldSpecSchema, ValidatedFieldSpecSchema } from "./fields.js";
 
 export {
+	ActorBlockSchema,
 	BlockSchema,
 	ConstraintBlockSchema,
 	DefinitionBlockSchema,
 	FeatureBlockSchema,
 	LinkBlockSchema,
 	LogicBlockSchema,
+	OutcomeBlockSchema,
 	PMDocumentSchema,
 	PolicyBlockSchema,
+	ScenarioBlockSchema,
 	SectionBlockSchema,
 } from "./blocks.js";
 
